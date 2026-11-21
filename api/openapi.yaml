@@ -1,0 +1,797 @@
+openapi: 3.1.0
+info:
+  title: TRACEFLOW Query API
+  version: 0.1.0-draft
+  summary: Internal query API between the Next.js BFF and trace-api. Not exposed to browsers.
+  description: |
+    Conventions (ADR-0004):
+    - Timestamps and durations are Unix nanoseconds encoded as decimal strings.
+    - Trace IDs are 32 lowercase hex chars; span IDs are 16 lowercase hex chars.
+    - All responses carry `Cache-Control: private, no-store`.
+    - Errors use `application/problem+json`.
+    - Populations are *observed* spans only; sampling is not reconstructed.
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+servers:
+  - url: http://trace-api:8080
+    description: Private Docker network only
+security:
+  - serviceToken: []
+tags:
+  - name: overview
+    description: Dashboard overview
+  - name: traces
+    description: Trace search and detail
+  - name: services
+    description: Observed services
+  - name: topology
+    description: Evidence-backed service dependencies
+  - name: analytics
+    description: SERVER-span latency analytics
+  - name: settings
+    description: Retention and limits
+  - name: ops
+    description: Health and ingestion status
+
+paths:
+  /livez:
+    get:
+      tags: [ops]
+      operationId: getLiveness
+      summary: Get liveness
+      security: []
+      responses:
+        '200': { $ref: '#/components/responses/HealthOk' }
+  /readyz:
+    get:
+      tags: [ops]
+      operationId: getReadiness
+      summary: Get readiness
+      security: []
+      responses:
+        '200': { $ref: '#/components/responses/HealthOk' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /v1/overview:
+    get:
+      tags: [overview]
+      operationId: getOverview
+      summary: Get overview
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/ServiceFilter'
+      responses:
+        '200':
+          description: Overview of observed activity in the window.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Overview' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /v1/traces:
+    get:
+      tags: [traces]
+      operationId: listTraces
+      summary: List traces
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/ServiceFilter'
+        - name: status
+          in: query
+          schema: { type: string, enum: [any, error, ok_or_unset], default: any }
+        - name: min_duration_nano
+          in: query
+          schema: { $ref: '#/components/schemas/Nanos' }
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Page of trace summaries ordered by start time desc, trace id desc.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TraceList' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /v1/traces/{traceId}:
+    get:
+      tags: [traces]
+      operationId: getTrace
+      summary: Get trace
+      parameters:
+        - name: traceId
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/TraceId' }
+      responses:
+        '200':
+          description: Full trace as currently stored. May change as late spans arrive.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TraceDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /v1/services:
+    get:
+      tags: [services]
+      operationId: listServices
+      summary: List services
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Services observed in the window with SERVER-span statistics.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [window, services]
+                properties:
+                  window: { $ref: '#/components/schemas/Window' }
+                  services:
+                    type: array
+                    maxItems: 1000
+                    items: { $ref: '#/components/schemas/ServiceSummary' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /v1/services/{serviceName}:
+    get:
+      tags: [services]
+      operationId: getService
+      summary: Get service
+      parameters:
+        - $ref: '#/components/parameters/ServiceName'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Service detail with per-operation SERVER statistics and verified edges.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ServiceDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /v1/dependencies:
+    get:
+      tags: [topology]
+      operationId: getDependencies
+      summary: Get dependencies
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Observed service graph. Edges only from verified parent-child evidence.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DependencyGraph' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /v1/analytics/server-latency:
+    get:
+      tags: [analytics]
+      operationId: getServerLatency
+      summary: Get server latency
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/ServiceFilter'
+        - name: operation
+          in: query
+          schema: { type: string, maxLength: 512 }
+        - name: bucket_seconds
+          in: query
+          schema: { type: integer, enum: [60, 300, 900, 3600], default: 300 }
+      responses:
+        '200':
+          description: Time series of observed SERVER span latency, throughput and errors.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LatencySeries' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /v1/ingestion/status:
+    get:
+      tags: [ops]
+      operationId: getIngestionStatus
+      summary: Get ingestion status
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+      responses:
+        '200':
+          description: Receiver counters for the window. Collector-side drops are reported by the Collector, not here.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/IngestionStatus' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /v1/settings:
+    get:
+      tags: [settings]
+      operationId: getSettings
+      summary: Get settings
+      responses:
+        '200':
+          description: Current settings and limits.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Settings' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+    patch:
+      tags: [settings]
+      operationId: updateSettings
+      summary: Update settings
+      description: Not available in public-demo (403). Audited with actor supplied by the BFF.
+      parameters:
+        - name: X-Traceflow-Actor
+          in: header
+          required: true
+          description: Operator identity (GitHub numeric ID) asserted by the authenticated BFF.
+          schema: { type: string, pattern: '^[0-9]{1,20}$' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SettingsPatch' }
+      responses:
+        '200':
+          description: Updated settings.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Settings' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+components:
+  securitySchemes:
+    serviceToken:
+      type: http
+      scheme: bearer
+      description: Static service token shared by BFF and trace-api (ADR-0005).
+
+  headers:
+    NoStore:
+      schema: { type: string, const: 'private, no-store' }
+
+  parameters:
+    From:
+      name: from
+      in: query
+      required: true
+      description: Inclusive window start, Unix ns.
+      schema: { $ref: '#/components/schemas/Nanos' }
+    To:
+      name: to
+      in: query
+      required: true
+      description: Exclusive window end, Unix ns. Window ≤ 7 days.
+      schema: { $ref: '#/components/schemas/Nanos' }
+    ServiceFilter:
+      name: service
+      in: query
+      schema: { $ref: '#/components/schemas/ServiceName' }
+    ServiceName:
+      name: serviceName
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/ServiceName' }
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque cursor from a previous page. Bound to the same filters.
+      schema: { type: string, maxLength: 512, pattern: '^[A-Za-z0-9_-]+$' }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+
+  responses:
+    HealthOk:
+      description: Healthy.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status]
+            properties:
+              status: { type: string, const: ok }
+    BadRequest:
+      description: Invalid parameters.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthorized:
+      description: Missing or invalid service token.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: Operation not permitted in this profile.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Resource not found.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unavailable:
+      description: Database unavailable or query timed out.
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    Nanos:
+      type: string
+      description: Unix nanoseconds or nanosecond duration as decimal string.
+      pattern: '^[0-9]{1,19}$'
+      examples: ['1763800000123456789']
+    SignedNanos:
+      type: string
+      description: Signed nanosecond duration (negative indicates clock skew).
+      pattern: '^-?[0-9]{1,19}$'
+    TraceId:
+      type: string
+      pattern: '^[0-9a-f]{32}$'
+    SpanId:
+      type: string
+      pattern: '^[0-9a-f]{16}$'
+    ServiceName:
+      type: string
+      minLength: 1
+      maxLength: 256
+    SpanKind:
+      type: string
+      enum: [unspecified, internal, server, client, producer, consumer]
+    StatusCode:
+      type: string
+      enum: [unset, ok, error]
+
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: { type: string }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code:
+          type: string
+          enum: [invalid_parameter, window_too_large, cursor_invalid, cursor_filter_mismatch, unauthorized, forbidden, not_found, query_timeout, storage_unavailable, internal]
+
+    Window:
+      type: object
+      required: [from, to]
+      properties:
+        from: { $ref: '#/components/schemas/Nanos' }
+        to: { $ref: '#/components/schemas/Nanos' }
+
+    Freshness:
+      type: object
+      required: [generated_at, last_span_received_at]
+      properties:
+        generated_at: { $ref: '#/components/schemas/Nanos' }
+        last_span_received_at:
+          oneOf:
+            - { $ref: '#/components/schemas/Nanos' }
+            - { type: 'null' }
+
+    Population:
+      type: object
+      description: Describes exactly which spans a statistic is computed from.
+      required: [span_kind, sample_count, note]
+      properties:
+        span_kind: { type: string, const: server }
+        sample_count: { type: integer, minimum: 0 }
+        note:
+          type: string
+          description: Human-readable caveat, e.g. "Observed SERVER spans only; sampling not reconstructed."
+
+    Percentiles:
+      type: object
+      description: Nearest-rank (PostgreSQL percentile_disc). A value is null when sample_count is below its reliability floor (p50 ≥ 1, p95 ≥ 20, p99 ≥ 100).
+      required: [p50, p95, p99]
+      properties:
+        p50: { oneOf: [{ $ref: '#/components/schemas/Nanos' }, { type: 'null' }] }
+        p95: { oneOf: [{ $ref: '#/components/schemas/Nanos' }, { type: 'null' }] }
+        p99: { oneOf: [{ $ref: '#/components/schemas/Nanos' }, { type: 'null' }] }
+
+    ServerStats:
+      type: object
+      required: [population, request_count, error_count, error_fraction, latency]
+      properties:
+        population: { $ref: '#/components/schemas/Population' }
+        request_count: { type: integer, minimum: 0 }
+        error_count: { type: integer, minimum: 0 }
+        unset_status_count: { type: integer, minimum: 0 }
+        error_fraction:
+          description: error_count / request_count; null when request_count = 0.
+          oneOf: [{ type: number, minimum: 0, maximum: 1 }, { type: 'null' }]
+        latency: { $ref: '#/components/schemas/Percentiles' }
+
+    Overview:
+      type: object
+      required: [window, freshness, totals, top_services, recent_traces]
+      properties:
+        window: { $ref: '#/components/schemas/Window' }
+        freshness: { $ref: '#/components/schemas/Freshness' }
+        totals: { $ref: '#/components/schemas/ServerStats' }
+        trace_count: { type: integer, minimum: 0 }
+        top_services:
+          type: array
+          maxItems: 20
+          items: { $ref: '#/components/schemas/ServiceSummary' }
+        recent_traces:
+          type: array
+          maxItems: 20
+          items: { $ref: '#/components/schemas/TraceSummary' }
+
+    TraceDuration:
+      type: object
+      required: [value_nano, basis]
+      properties:
+        value_nano: { $ref: '#/components/schemas/SignedNanos' }
+        basis:
+          type: string
+          enum: [root_span, observed_range_estimate]
+
+    TraceCompleteness:
+      type: object
+      required: [root_count, orphan_count, has_clock_skew]
+      properties:
+        root_count: { type: integer, minimum: 0 }
+        orphan_count: { type: integer, minimum: 0 }
+        has_clock_skew: { type: boolean }
+        last_received_at: { $ref: '#/components/schemas/Nanos' }
+
+    TraceSummary:
+      type: object
+      required: [trace_id, start_unix_nano, duration, root, span_count, error_span_count, service_names, completeness]
+      properties:
+        trace_id: { $ref: '#/components/schemas/TraceId' }
+        start_unix_nano: { $ref: '#/components/schemas/Nanos' }
+        duration: { $ref: '#/components/schemas/TraceDuration' }
+        root:
+          oneOf:
+            - type: object
+              required: [span_id, service_name, name]
+              properties:
+                span_id: { $ref: '#/components/schemas/SpanId' }
+                service_name: { $ref: '#/components/schemas/ServiceName' }
+                name: { type: string }
+            - { type: 'null' }
+        span_count: { type: integer, minimum: 0 }
+        error_span_count: { type: integer, minimum: 0 }
+        service_names:
+          type: array
+          items: { $ref: '#/components/schemas/ServiceName' }
+        completeness: { $ref: '#/components/schemas/TraceCompleteness' }
+
+    TraceList:
+      type: object
+      required: [window, items, next_cursor]
+      properties:
+        window: { $ref: '#/components/schemas/Window' }
+        items:
+          type: array
+          maxItems: 200
+          items: { $ref: '#/components/schemas/TraceSummary' }
+        next_cursor:
+          oneOf: [{ type: string }, { type: 'null' }]
+
+    AnyValue:
+      description: OTLP AnyValue with explicit type. int values are decimal strings.
+      oneOf:
+        - type: object
+          required: [type, value]
+          properties: { type: { const: string }, value: { type: string } }
+        - type: object
+          required: [type, value]
+          properties: { type: { const: bool }, value: { type: boolean } }
+        - type: object
+          required: [type, value]
+          properties: { type: { const: int }, value: { type: string, pattern: '^-?[0-9]{1,19}$' } }
+        - type: object
+          required: [type, value]
+          properties: { type: { const: double }, value: { type: number } }
+        - type: object
+          required: [type, value]
+          properties: { type: { const: bytes }, value: { type: string, contentEncoding: base64 } }
+        - type: object
+          required: [type, value]
+          properties:
+            type: { const: array }
+            value: { type: array, items: { $ref: '#/components/schemas/AnyValue' } }
+        - type: object
+          required: [type, value]
+          properties:
+            type: { const: kvlist }
+            value: { type: array, items: { $ref: '#/components/schemas/Attribute' } }
+        - type: object
+          required: [type]
+          properties: { type: { const: empty } }
+
+    Attribute:
+      type: object
+      required: [key, value]
+      properties:
+        key: { type: string }
+        value: { $ref: '#/components/schemas/AnyValue' }
+        truncated: { type: boolean, default: false }
+
+    SpanEvent:
+      type: object
+      required: [time_unix_nano, name, attributes]
+      properties:
+        time_unix_nano: { $ref: '#/components/schemas/Nanos' }
+        name: { type: string }
+        attributes: { type: array, items: { $ref: '#/components/schemas/Attribute' } }
+        dropped_attributes_count: { type: integer, minimum: 0 }
+
+    SpanLink:
+      type: object
+      required: [trace_id, span_id, attributes]
+      properties:
+        trace_id: { $ref: '#/components/schemas/TraceId' }
+        span_id: { $ref: '#/components/schemas/SpanId' }
+        trace_state: { type: string }
+        attributes: { type: array, items: { $ref: '#/components/schemas/Attribute' } }
+
+    Resource:
+      type: object
+      required: [service_name, attributes]
+      properties:
+        service_name: { $ref: '#/components/schemas/ServiceName' }
+        schema_url: { type: string }
+        attributes: { type: array, items: { $ref: '#/components/schemas/Attribute' } }
+
+    InstrumentationScope:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        version: { type: string }
+        schema_url: { type: string }
+
+    Span:
+      type: object
+      required: [span_id, parent_span_id, parent_present, name, kind, start_unix_nano, end_unix_nano, duration_nano, status, service_name, resource_ref, scope_ref, attributes, events, links, quality]
+      properties:
+        span_id: { $ref: '#/components/schemas/SpanId' }
+        parent_span_id:
+          oneOf: [{ $ref: '#/components/schemas/SpanId' }, { type: 'null' }]
+        parent_present:
+          type: boolean
+          description: False when parent_span_id is set but that span has not been received.
+        name: { type: string }
+        kind: { $ref: '#/components/schemas/SpanKind' }
+        start_unix_nano: { $ref: '#/components/schemas/Nanos' }
+        end_unix_nano: { $ref: '#/components/schemas/Nanos' }
+        duration_nano: { $ref: '#/components/schemas/SignedNanos' }
+        status:
+          type: object
+          required: [code]
+          properties:
+            code: { $ref: '#/components/schemas/StatusCode' }
+            message: { type: string }
+        service_name: { $ref: '#/components/schemas/ServiceName' }
+        resource_ref: { type: integer, description: Index into TraceDetail.resources }
+        scope_ref: { type: integer, description: Index into TraceDetail.scopes }
+        trace_state: { type: string }
+        attributes: { type: array, items: { $ref: '#/components/schemas/Attribute' } }
+        events: { type: array, items: { $ref: '#/components/schemas/SpanEvent' } }
+        links: { type: array, items: { $ref: '#/components/schemas/SpanLink' } }
+        dropped:
+          type: object
+          properties:
+            attributes: { type: integer, minimum: 0 }
+            events: { type: integer, minimum: 0 }
+            links: { type: integer, minimum: 0 }
+        quality:
+          type: object
+          required: [negative_duration, zero_duration, truncated]
+          properties:
+            negative_duration: { type: boolean }
+            zero_duration: { type: boolean }
+            truncated: { type: boolean }
+
+    TraceDetail:
+      type: object
+      required: [summary, spans, resources, scopes, freshness]
+      properties:
+        summary: { $ref: '#/components/schemas/TraceSummary' }
+        spans:
+          type: array
+          maxItems: 50000
+          description: Ordered by start_unix_nano asc, span_id asc.
+          items: { $ref: '#/components/schemas/Span' }
+        resources: { type: array, items: { $ref: '#/components/schemas/Resource' } }
+        scopes: { type: array, items: { $ref: '#/components/schemas/InstrumentationScope' } }
+        freshness: { $ref: '#/components/schemas/Freshness' }
+
+    ServiceSummary:
+      type: object
+      required: [service_name, last_observed_unix_nano, server]
+      properties:
+        service_name: { $ref: '#/components/schemas/ServiceName' }
+        last_observed_unix_nano: { $ref: '#/components/schemas/Nanos' }
+        server: { $ref: '#/components/schemas/ServerStats' }
+
+    OperationSummary:
+      type: object
+      required: [name, server]
+      properties:
+        name: { type: string }
+        server: { $ref: '#/components/schemas/ServerStats' }
+
+    ServiceDetail:
+      type: object
+      required: [window, service, operations, downstream, upstream, recent_traces]
+      properties:
+        window: { $ref: '#/components/schemas/Window' }
+        service: { $ref: '#/components/schemas/ServiceSummary' }
+        operations:
+          type: array
+          maxItems: 500
+          items: { $ref: '#/components/schemas/OperationSummary' }
+        downstream: { type: array, items: { $ref: '#/components/schemas/DependencyEdge' } }
+        upstream: { type: array, items: { $ref: '#/components/schemas/DependencyEdge' } }
+        recent_traces:
+          type: array
+          maxItems: 20
+          items: { $ref: '#/components/schemas/TraceSummary' }
+
+    DependencyEdge:
+      type: object
+      description: Edge from caller to callee, derived only from a parent span in `source` whose direct child span is in `target` (different services). Missing linkage is never an edge.
+      required: [source, target, evidence]
+      properties:
+        source: { $ref: '#/components/schemas/ServiceName' }
+        target: { $ref: '#/components/schemas/ServiceName' }
+        evidence:
+          type: object
+          required: [basis, parent_child_pairs, trace_count, sample_trace_ids, first_seen_unix_nano, last_seen_unix_nano]
+          properties:
+            basis:
+              type: string
+              enum: [client_server_parent_child, other_parent_child]
+              description: client_server when parent kind is CLIENT/PRODUCER and child kind is SERVER/CONSUMER.
+            parent_child_pairs: { type: integer, minimum: 1 }
+            error_pairs: { type: integer, minimum: 0 }
+            trace_count: { type: integer, minimum: 1 }
+            sample_trace_ids:
+              type: array
+              maxItems: 5
+              items: { $ref: '#/components/schemas/TraceId' }
+            first_seen_unix_nano: { $ref: '#/components/schemas/Nanos' }
+            last_seen_unix_nano: { $ref: '#/components/schemas/Nanos' }
+
+    DependencyGraph:
+      type: object
+      required: [window, nodes, edges, freshness]
+      properties:
+        window: { $ref: '#/components/schemas/Window' }
+        nodes:
+          type: array
+          maxItems: 500
+          items: { $ref: '#/components/schemas/ServiceSummary' }
+        edges:
+          type: array
+          maxItems: 5000
+          items: { $ref: '#/components/schemas/DependencyEdge' }
+        freshness: { $ref: '#/components/schemas/Freshness' }
+
+    LatencyPoint:
+      type: object
+      required: [bucket_start_unix_nano, stats]
+      properties:
+        bucket_start_unix_nano: { $ref: '#/components/schemas/Nanos' }
+        stats:
+          description: null when bucket has no observations (do not interpolate).
+          oneOf: [{ $ref: '#/components/schemas/ServerStats' }, { type: 'null' }]
+
+    LatencySeries:
+      type: object
+      required: [window, bucket_seconds, points, overall]
+      properties:
+        window: { $ref: '#/components/schemas/Window' }
+        bucket_seconds: { type: integer }
+        service: { $ref: '#/components/schemas/ServiceName' }
+        operation: { type: string }
+        points:
+          type: array
+          maxItems: 10080
+          items: { $ref: '#/components/schemas/LatencyPoint' }
+        overall: { $ref: '#/components/schemas/ServerStats' }
+
+    IngestionStatus:
+      type: object
+      required: [window, requests, spans_received, spans_accepted, spans_duplicate, spans_rejected, reject_reasons, spans_conflict]
+      properties:
+        window: { $ref: '#/components/schemas/Window' }
+        requests:
+          type: object
+          additionalProperties: { type: integer }
+          description: Count by HTTP status code (string keys, e.g. "200", "413").
+        spans_received: { type: integer }
+        spans_accepted: { type: integer }
+        spans_duplicate: { type: integer }
+        spans_rejected: { type: integer }
+        spans_conflict: { type: integer }
+        reject_reasons:
+          type: object
+          additionalProperties: { type: integer }
+        last_request_at:
+          oneOf: [{ $ref: '#/components/schemas/Nanos' }, { type: 'null' }]
+
+    Settings:
+      type: object
+      required: [profile, retention_days, limits]
+      properties:
+        profile: { type: string, enum: [local-dev, operator-prod, public-demo] }
+        retention_days: { type: integer, minimum: 1, maximum: 90 }
+        last_retention_run:
+          oneOf:
+            - type: object
+              required: [finished_at, traces_deleted, spans_deleted, status]
+              properties:
+                finished_at: { $ref: '#/components/schemas/Nanos' }
+                traces_deleted: { type: integer }
+                spans_deleted: { type: integer }
+                status: { type: string, enum: [ok, failed, partial] }
+            - { type: 'null' }
+        limits:
+          type: object
+          required: [max_request_bytes_compressed, max_request_bytes_raw, max_spans_per_request, max_spans_per_trace, max_query_window_seconds]
+          properties:
+            max_request_bytes_compressed: { type: integer }
+            max_request_bytes_raw: { type: integer }
+            max_spans_per_request: { type: integer }
+            max_spans_per_trace: { type: integer }
+            max_query_window_seconds: { type: integer }
+
+    SettingsPatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        retention_days: { type: integer, minimum: 1, maximum: 90 }
