@@ -1,6 +1,6 @@
 # TRACEFLOW — OpenAPI Consumer Review (M1-R1)
 
-**Reviewer / owner:** Sonnet (frontend consumer) · **Date:** 2026-11-22 · **Reviewed artifact:** `api/openapi.yaml` `0.1.0-draft` @ base commit `9089e9b` · **Spec:** §11, §10
+**Reviewer / owner:** Sonnet (frontend consumer) · **Date:** 2026-11-22 · **Round 1:** `api/openapi.yaml` `0.1.0-draft` @ `9089e9b` → CHANGES REQUESTED (§1–4, kept for history). **Round 2:** `0.2.0-draft` @ main `ffd5b3c` → see **§5 (APPROVED, with non-blocking notes)** · **Spec:** §11, §10
 **Method:** read-through of the YAML against every route in `page-matrix.md`; payload sizes are **back-of-envelope estimates, not measurements** (marked *est.*). No code run; nothing generated or linted by me (`redocly lint` result in `api-contract.md` is taken from the Opus note, not re-run: **NOT TESTED** by this reviewer).
 **This review does not edit `api/openapi.yaml`** (Opus owns it). Recommendation levels: **B** = blocks contract freeze, **S** = should change before freeze (cheap now, costly later), **N** = nice/optional, **D** = decision for Opus/owner.
 
@@ -83,3 +83,44 @@ Explicit `parent_present` and `quality` flags; `Percentiles` nulls with floors; 
 | R-7, R-9, R-10, R-16, R-17, R-18, R-19, R-20 | D/N | Decisions logged | See notes |
 
 **Reviewer verdict:** `CHANGES REQUESTED` — freeze blocked on R-3 and R-4(a); all else non-blocking. Re-review after Opus updates `api/openapi.yaml` (I will diff the schemas listed above and re-run the page-matrix binding check). Nothing in this review was verified by executing code: **NOT TESTED**.
+
+## 5. Re-review of `0.2.0-draft` (main `ffd5b3c`) — 2026-11-22
+
+**Method:** `git show refs/heads/main:api/openapi.yaml` diffed against the 0.1.0 text I reviewed (full diff read); `docs/architecture/api-contract.md` resolution table read; `npx @redocly/cli@2 lint` run by me on the main copy → **valid, 2 warnings** (`operation-4xx-response`, health probes; matches the accepted warnings). Not done: no codegen, no contract tests, no runtime (NOT TESTED).
+
+### 5.1 Resolution check (each R-ID vs actual YAML, not just the table)
+| ID | Outcome claimed | Verified in YAML | Result |
+| --- | --- | --- | --- |
+| R-1 | `detail`, `getSpan`, `truncation`, `*_count`, cap doc | `detail` param on `getTrace`; `GET …/spans/{spanId}` → `SpanDetail`; `TraceDetail.detail/truncation` required; `Span` requires `attribute_count/event_count/link_count`, `attributes/events/links` no longer required; `maxItems` doc = default cap | ✔ (note N-1, N-3) |
+| R-2 | `BucketStats`, `service_names` ≤ 50 + `service_count`, 2 000-point cap | `LatencyPoint.stats: BucketStats\|null`; `Population` only on `overall`; `maxItems: 2000`; `service_names` maxItems 50, `service_count` | ✔ (`service_count` is not in `TraceSummary.required` — see N-5) |
+| R-3 | `getLatencyDistribution` | Present; fixed log buckets, open last bucket (`upper_nano` null), `population`, `excluded_negative_duration`, `maxItems: 64`, `freshness` | ✔ (N-2) |
+| R-4 | exemplars + `sample_error_trace_ids` | `ServerStats.exemplars` (trace+span ids, nullable) — **optional** property (N-4); `sample_error_trace_ids` required on `ServiceSummary` and `OperationSummary` | ✔ |
+| R-5 | `Problem.errors[]`, plain-text | Present (`field, code, message`; enum codes) | ✔ |
+| R-6 | `partial`, dense | `LatencyPoint.partial` required; dense stated | ✔ |
+| R-7 | declined | Accepted as decision; `next_retention_run` present | ✔ (decision) |
+| R-8 | service 200/404, trace single 404 | `ServiceSummary.observed_in_window`; 404 descriptions as claimed | ✔ |
+| R-9/R-10 | limitation / cursor stateless | Documented in `info.description` | ✔ |
+| R-11 | `freshness` everywhere | Added to `TraceList`, services list, `ServiceDetail`, `LatencySeries`, `LatencyDistribution`, `IngestionStatus`; `Settings.generated_at` | ✔ |
+| R-12 | `latest_trace_id`, `first_span_received_at`, `RejectReason` | Present; `reject_reasons` `propertyNames` = `RejectReason` enum | ✔ |
+| R-13 | invariants | Documented in descriptions; `Overview.trace_count` required; `status`/`service` filter semantics written; `top_services` ranking | ✔ |
+| R-14 | `read_only`, `next_retention_run` | Required in `Settings` | ✔ |
+| R-15 | Nanos `{1,19}` int64, edge basis text | Description fixed; Nanos unchanged | ✔ |
+| R-16 | demo re-stamp hourly (a) | Decision recorded | ✔ (depends on Opus delivering the job; UI assumes it) |
+| R-17 | demo endpoint set | `info.description` lists the set; ingestion/settings 404 | ✔ |
+| R-18/R-19/R-20 | covered / agreed / stated | depth 8, 4 KiB truncation documented | ✔ |
+
+### 5.2 New / residual notes (all **non-blocking**; do not hold freeze)
+- **N-1** `SpanDetail.span` reuses `Span`, where `attributes/events/links` are now optional ⇒ generated TS types are optional even for `getSpan`. UI must null-handle; cleaner: an `allOf` variant requiring them for `SpanDetail`. Suggestion only.
+- **N-2** `LatencyDistribution`: please state the invariant `sum(buckets.count) + excluded_negative_duration = population.sample_count` (UI shows both numbers; a mismatch would look like a bug). Exact boundary list is "fixed in M4 code and oracle" — UI renders from returned bounds and will not hard-code them.
+- **N-3** `truncation`: state **which** spans are returned (suggest earliest-start prefix) and that `parent_present` is computed against *stored* spans, not the returned subset; otherwise a truncated response can show children whose parents were cut as spurious "parent span not received". UI will also show the truncation banner so a reader isn't misled, but the semantics should be in the contract.
+- **N-4** `ServerStats.exemplars` is not in `required`; with `sample_count = 0` it should still be present with nulls (or absent). Either is fine for UI (absent ⇒ no link); preference: required, so generated types are non-optional.
+- **N-5** `TraceSummary.service_count` is not in `required` (list item `required` unchanged). UI "+N" chip needs it; make required or UI falls back to `service_names.length`.
+- **N-6** `getSpan` 404 text says generic `NotFound`; fine, but document that a span id not belonging to the trace is also 404 (and `lite` `links[].span_id` targets can point to other traces).
+- **N-7** `exemplars` are SERVER-span based ("slowest SERVER span"): UI copy will say "slowest request (server span)", not "slowest trace".
+- **N-8** Public-demo: `getIngestionStatus` 404 means the `/demo` overview omits ingestion health (page matrix updated); confirm BFF returns a clean 404 Problem (not 403/500) so the UI never renders an error state for an intentionally absent endpoint.
+
+### 5.3 Page-matrix bindings
+`page-matrix.md` updated to 0.2.0 (operationIds `getSpan`, `getLatencyDistribution` added; `freshness`, `BucketStats`, `partial`, exemplars, `observed_in_window`, `read_only`, `next_retention_run`, `RejectReason`, `truncation`, lite-mode flow; `/demo` omits ingestion; every earlier "Gap" removed). Coverage check: all 14 non-health operationIds consumed (plus health proxy BFF-only). **Binding check is a document read-through only — NOT TESTED against generated types.**
+
+### 5.4 Verdict
+**APPROVED** for the frontend consumer side of the M1 contract freeze, subject to: (1) none of N-1…N-8 blocks; Opus may resolve in 0.2.1 or at freeze; (2) approval is based on reading the YAML and one lint run, not on codegen or contract tests (NOT TESTED); (3) R-16 relies on a demo re-stamp job that does not exist yet. Freeze also still needs Opus's own sign-off and the owner.

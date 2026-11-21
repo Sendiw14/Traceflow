@@ -53,3 +53,21 @@ KNOWN FAILURES / UNTESTED: effort/Ultracode unverified; font + icon licences not
 DEPENDENCIES / NEXT HANDOFF: Opus responds to consumer review (R-3, R-4a blocking) and decides R-16/R-17 demo questions → Sonnet re-review → M1 contract freeze sign-off; owner reviews identity/typography choices (Instrument Serif/Inter/JetBrains Mono); M5 asset import with licence check
 FINAL: NOT TESTED (design documents only; contrast arithmetic computed, everything else unverified; freeze blocked on review items)
 ```
+
+## M1-R1 round 2 — OpenAPI 0.2.0-draft consumer re-review
+
+```text
+TASK_ID: M1-R1 (re-review) | BASE_COMMIT_SHA: cbec1e8 (design branch); reviewed main ffd5b3c | BRANCH/PR: claude/vigorous-yalow-e6f487 (local only, not pushed)
+MODEL/EFFORT/ULTRACODE VERIFIED: claude-sonnet-5-5 / NOT TESTED / NOT TESTED
+OWNER: Sonnet | REVIEWER: Opus (response), owner
+REQUIREMENT_IDS: AC-API-01, AC-UX-01, SCOPE-05, SCOPE-08
+FILES_CHANGED: docs/design/openapi-consumer-review.md (§5 added, header), docs/design/page-matrix.md (0.2.0 bindings), docs/design/component-inventory.md (minor), docs/workflow/integration-log.md (append)
+CONTRACT_VERSION CONSUMED / CONTRACT_CHANGES: api/openapi.yaml 0.2.0-draft / none made by Sonnet
+BEHAVIOUR IMPLEMENTED: none
+SECURITY / DATA IMPACT: none
+COMMANDS RUN + ACTUAL RESULTS: `git show refs/heads/main:api/openapi.yaml` diffed vs 0.1.0; `npx @redocly/cli@2 lint` on main copy → valid, 2 warnings (health probes)
+TEST FIXTURES: none
+KNOWN FAILURES / UNTESTED: no codegen/contract tests run; 8 non-blocking notes N-1..N-8; R-16 demo re-stamp job not built
+DEPENDENCIES / NEXT HANDOFF: Opus considers N-1..N-8 (0.2.1 or at freeze) → freeze sign-off (Opus + Sonnet + owner)
+FINAL: NOT TESTED (verdict APPROVED on document review only)
+```
