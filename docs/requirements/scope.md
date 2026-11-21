@@ -29,6 +29,6 @@ Metrics/log storage; AI root-cause analysis; alerting; multi-user/multi-org tena
 | `operator-prod` | Private operator telemetry | GitHub OAuth + numeric ID allowlist | Only Caddy HTTPS public; DB/Go/Collector private; remote OTLP off by default |
 | `public-demo` | Synthetic only | None (read-only) | Separate deployment, DB, credentials; no ingestion/admin |
 
-## Open scope questions (owner)
+## Owner decisions
 
-See `risks.md` → "Blocking unknowns".
+See `risks.md` → "Owner decisions on blocking unknowns". Summary: build and prove V1 on `local-dev`; `operator-prod` host, domain and OAuth chosen before M8; `public-demo` on its own small VPS; Apache-2.0.

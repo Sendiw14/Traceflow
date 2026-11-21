@@ -8,4 +8,4 @@ Self-hostable, open-source distributed tracing and diagnostics. **Status: M0 dis
 - Requirements (draft): [docs/requirements/](docs/requirements/)
 - Agent instructions: [CLAUDE.md](CLAUDE.md)
 
-License: not yet chosen.
+License: [Apache-2.0](LICENSE).

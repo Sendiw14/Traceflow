@@ -18,13 +18,15 @@
 | R-12 | MEDIUM | Local disk 90 GiB free (79% used) limits benchmark datasets | Size benchmark data from measured bytes/span; benchmark host may differ | Capacity profile | OPEN |
 | R-13 | MEDIUM | Independent review: same-model sessions are not a true independent security audit | Human review for high-risk security decisions | M6 gate | OPEN |
 
-## Blocking unknowns (owner input needed before M1 freeze)
+## Owner decisions on blocking unknowns (2026-11-22)
 
-| ID | Question | Blocks |
-| --- | --- | --- |
-| U-01 | Hosting: provider, host class (CPU/RAM/disk), monthly cost ceiling | Capacity profile, RPO/RTO, deploy |
-| U-02 | Expected real telemetry: sustained span rate, retention, sensitive attributes | Capacity, privacy policy |
-| U-03 | Domain + TLS; GitHub OAuth app; operator GitHub numeric user ID | `operator-prod`, auth |
-| U-04 | Public demo hosting (separate host/DB?) | `public-demo` profile |
-| U-05 | License (e.g. Apache-2.0 vs MIT vs AGPL) | LICENSE, dependency review |
-| U-06 | Sonnet 5.5 + Ultracode availability for frontend session | Workflow ownership |
+| ID | Question | Owner decision | Consequence | Status |
+| --- | --- | --- | --- | --- |
+| U-01 | Hosting for `operator-prod` | Local only for now; choose host before M8 | Capacity profile, RPO/RTO stay provisional; benchmarks use documented local/benchmark host | DEFERRED (pre-M8) |
+| U-02 | Real telemetry | Demo + personal projects: planning assumption < 50 spans/s sustained, 7-day retention, no third-party personal data | Sustained profile sized from this; must be re-measured (R-01) | DECIDED (assumption) |
+| U-03 | Domain, TLS, GitHub OAuth app, operator numeric ID | Defer domain/OAuth to pre-M8. Operator numeric GitHub ID obtained; supplied via env at deploy time, not committed | `local-dev` uses guarded bootstrap auth | DEFERRED (pre-M8) |
+| U-04 | Public demo hosting | Separate small VPS, own DB and credentials | Strongest isolation per spec §2; extra host cost at M8 needs owner approval | DECIDED |
+| U-05 | License | Apache-2.0 | `LICENSE` added; dependency/asset licenses must be compatible | DECIDED |
+| U-06 | Frontend owner | Separate Sonnet 5.5 (high, Ultracode) session in its own worktree after M1 freeze | Owner verifies `/model`, `/effort`, `/status` and logs in `docs/workflow/model-availability.md` | DECIDED (pending verification) |
+
+Paid resources (VPS, domain) still require explicit owner approval before purchase.
