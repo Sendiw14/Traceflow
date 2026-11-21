@@ -1,6 +1,6 @@
 # App API Contract Notes (M1 draft)
 
-**Status:** DRAFT 0.2.0. Source of truth: `api/openapi.yaml` (lint: `npx @redocly/cli@2 lint api/openapi.yaml` → valid, 2 accepted warnings: health probes have no 4xx). Conventions: ADR-0004. Consumer review: `docs/design/openapi-consumer-review.md` (on Sonnet branch until merged). **Freeze requires Sonnet re-review.**
+**Status:** DRAFT 0.2.1 (consumer-approved; freeze pending owner). Source of truth: `api/openapi.yaml` (lint: `npx @redocly/cli@2 lint api/openapi.yaml` → valid, 2 accepted warnings: health probes have no 4xx). Conventions: ADR-0004. Consumer review: `docs/design/openapi-consumer-review.md` (on Sonnet branch until merged). Sonnet approved 0.2.0; 0.2.1 applies only its non-blocking notes.
 
 ## Endpoint → route mapping
 
@@ -59,3 +59,18 @@
 | R-18 | Covered by R-11 (`freshness.generated_at` for clock offset). |
 | R-19 | Agreed: counts are JSON integers; ns values via BigInt helpers. |
 | R-20 | Stated: max nesting depth 8; string/bytes values capped at 4 KiB; `truncated` applies to the value. |
+
+## Re-review notes (Sonnet round 2 → API 0.2.1-draft)
+
+Sonnet verdict on 0.2.0: **APPROVED** (non-blocking notes N-1..N-8).
+
+| ID | Resolution |
+| --- | --- |
+| N-1 | `SpanDetail.span` requires `attributes/events/links` (allOf). |
+| N-2 | Histogram invariant stated: `sum(count) + excluded_negative_duration = sample_count`. |
+| N-3 | Truncation returns earliest-start prefix; `parent_present` computed against all stored spans. |
+| N-4 | `ServerStats.exemplars` required (nulls when no samples). |
+| N-5 | `TraceSummary.service_count` required. |
+| N-6 | `getSpan` 404 documented (incl. span IDs from other traces). |
+| N-7 | UI copy only ("slowest request (server span)"); no API change. |
+| N-8 | BFF requirement: in public-demo, absent endpoints return a clean 404 Problem; `/demo` never calls them. |

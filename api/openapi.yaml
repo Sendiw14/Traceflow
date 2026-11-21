@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TRACEFLOW Query API
-  version: 0.2.0-draft
+  version: 0.2.1-draft
   summary: Internal query API between the Next.js BFF and trace-api. Not exposed to browsers.
   description: |
     Conventions (ADR-0004):
@@ -164,7 +164,11 @@ paths:
               schema: { $ref: '#/components/schemas/SpanDetail' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '404':
+          description: Span not stored in this trace (includes span IDs that exist only in other traces, e.g. link targets). code = not_found.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
         '503': { $ref: '#/components/responses/Unavailable' }
 
   /v1/services:
@@ -432,11 +436,6 @@ components:
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
-    NotFound:
-      description: Resource not found.
-      content:
-        application/problem+json:
-          schema: { $ref: '#/components/schemas/Problem' }
     Unavailable:
       description: Database unavailable or query timed out.
       headers:
@@ -534,7 +533,7 @@ components:
 
     ServerStats:
       type: object
-      required: [population, request_count, error_count, error_fraction, latency]
+      required: [population, request_count, error_count, error_fraction, latency, exemplars]
       properties:
         population: { $ref: '#/components/schemas/Population' }
         request_count: { type: integer, minimum: 0 }
@@ -546,7 +545,7 @@ components:
         latency: { $ref: '#/components/schemas/Percentiles' }
         exemplars:
           type: object
-          description: Traces from the same population, for navigation from aggregates to evidence.
+          description: Exemplar SERVER spans from the same population, for navigation from aggregates to evidence. Always present; fields null when sample_count = 0.
           required: [slowest_trace_id, slowest_span_id, latest_error_trace_id, latest_error_span_id]
           properties:
             slowest_trace_id: { oneOf: [{ $ref: '#/components/schemas/TraceId' }, { type: 'null' }] }
@@ -603,7 +602,7 @@ components:
 
     TraceSummary:
       type: object
-      required: [trace_id, start_unix_nano, duration, root, span_count, error_span_count, service_names, completeness]
+      required: [trace_id, start_unix_nano, duration, root, span_count, error_span_count, service_names, service_count, completeness]
       properties:
         trace_id: { $ref: '#/components/schemas/TraceId' }
         start_unix_nano: { $ref: '#/components/schemas/Nanos' }
@@ -774,7 +773,10 @@ components:
         resources: { type: array, items: { $ref: '#/components/schemas/Resource' } }
         scopes: { type: array, items: { $ref: '#/components/schemas/InstrumentationScope' } }
         truncation:
-          description: null unless the response cap was hit.
+          description: |
+            null unless the response cap was hit. When set, the returned spans are the earliest-starting
+            prefix in the stated order. parent_present is always computed against all stored spans, not
+            the returned subset.
           oneOf:
             - type: object
               required: [spans_total, spans_returned]
@@ -789,7 +791,11 @@ components:
       required: [trace_id, span, resource, scope, freshness]
       properties:
         trace_id: { $ref: '#/components/schemas/TraceId' }
-        span: { $ref: '#/components/schemas/Span' }
+        span:
+          description: Always full detail.
+          allOf:
+            - $ref: '#/components/schemas/Span'
+            - required: [attributes, events, links]
         resource: { $ref: '#/components/schemas/Resource' }
         scope: { $ref: '#/components/schemas/InstrumentationScope' }
         freshness: { $ref: '#/components/schemas/Freshness' }
@@ -927,7 +933,10 @@ components:
                 description: Exclusive upper bound; null for the last, open-ended bucket.
                 oneOf: [{ $ref: '#/components/schemas/Nanos' }, { type: 'null' }]
               count: { type: integer, minimum: 0 }
-        excluded_negative_duration: { type: integer, minimum: 0 }
+        excluded_negative_duration:
+          type: integer
+          minimum: 0
+          description: Invariant — sum(buckets[].count) + excluded_negative_duration = population.sample_count.
 
     RejectReason:
       type: string
