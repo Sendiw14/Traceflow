@@ -152,3 +152,6 @@ Configurable days (`settings.retention_days`). Job deletes `trace_summaries` who
 
 ## DB roles
 `traceflow_migrate` (DDL), `traceflow_rw` (ingest + query + retention), `traceflow_ro` (SELECT only; public-demo runtime). Auth schema has its own role (ADR-0005).
+
+## Reject reason codes
+Stable codes counted in `ingestion_records.reject_reasons` and exposed as `RejectReason` in the API: `invalid_id`, `invalid_timestamp` (zero, > int64, or unparseable), `invalid_span` (other structural faults), `conflicting_replay`, `trace_span_limit`. Adding a code is an API change.

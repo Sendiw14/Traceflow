@@ -1,15 +1,22 @@
 openapi: 3.1.0
 info:
   title: TRACEFLOW Query API
-  version: 0.1.0-draft
+  version: 0.2.0-draft
   summary: Internal query API between the Next.js BFF and trace-api. Not exposed to browsers.
   description: |
     Conventions (ADR-0004):
-    - Timestamps and durations are Unix nanoseconds encoded as decimal strings.
+    - Timestamps and durations are Unix nanoseconds encoded as decimal strings (int64 range, ≤ 19 digits).
     - Trace IDs are 32 lowercase hex chars; span IDs are 16 lowercase hex chars.
     - All responses carry `Cache-Control: private, no-store`.
-    - Errors use `application/problem+json`.
+    - Errors use `application/problem+json`. `Problem.detail` and `errors[].message` are plain text, no markup, never contain secrets.
     - Populations are *observed* spans only; sampling is not reconstructed.
+    - Every data response carries `freshness` (server clock) so clients can show data age and derive clock offset.
+    - Cursors are stateless (base64url of keyset + filter hash), have no lifetime, and need no server session.
+    - Attribute values: max nesting depth 8; string/bytes values truncated at 4 KiB (`Attribute.truncated` refers to the value only).
+
+    public-demo profile exposes only: getLiveness, getReadiness, getOverview, listTraces, getTrace,
+    getSpan, listServices, getService, getServerLatency, getLatencyDistribution, getDependencies.
+    getIngestionStatus, getSettings and updateSettings return 404 there.
   license:
     name: Apache-2.0
     identifier: Apache-2.0
@@ -81,9 +88,13 @@ paths:
       parameters:
         - $ref: '#/components/parameters/From'
         - $ref: '#/components/parameters/To'
-        - $ref: '#/components/parameters/ServiceFilter'
+        - name: service
+          in: query
+          description: Traces containing at least one span from this service (not only the root service).
+          schema: { $ref: '#/components/schemas/ServiceName' }
         - name: status
           in: query
+          description: "`error` = trace has error_span_count > 0. `ok_or_unset` = error_span_count = 0."
           schema: { type: string, enum: [any, error, ok_or_unset], default: any }
         - name: min_duration_nano
           in: query
@@ -107,17 +118,50 @@ paths:
       operationId: getTrace
       summary: Get trace
       parameters:
-        - name: traceId
-          in: path
-          required: true
-          schema: { $ref: '#/components/schemas/TraceId' }
+        - $ref: '#/components/parameters/TraceIdPath'
+        - name: detail
+          in: query
+          description: "`full` includes attributes/events/links per span. `lite` omits them (counts kept); use getSpan for the focused span."
+          schema: { type: string, enum: [full, lite], default: full }
       responses:
         '200':
-          description: Full trace as currently stored. May change as late spans arrive.
+          description: |
+            Trace as currently stored; may change as late spans arrive. Spans beyond
+            Settings.limits.max_spans_per_trace are never stored; if the server's response cap
+            (≤ that limit) is hit, `truncation` is set — spans are never dropped silently.
           headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/TraceDetail' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404':
+          description: |
+            No spans stored for this trace ID (not yet received, never received, or removed by retention —
+            these cannot be distinguished). code = not_found.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /v1/traces/{traceId}/spans/{spanId}:
+    get:
+      tags: [traces]
+      operationId: getSpan
+      summary: Get span
+      parameters:
+        - $ref: '#/components/parameters/TraceIdPath'
+        - name: spanId
+          in: path
+          required: true
+          schema: { $ref: '#/components/schemas/SpanId' }
+      responses:
+        '200':
+          description: One span with full attributes/events/links plus its resource and scope.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SpanDetail' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
@@ -139,10 +183,12 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [window, services]
+                required: [window, freshness, services]
                 properties:
                   window: { $ref: '#/components/schemas/Window' }
+                  freshness: { $ref: '#/components/schemas/Freshness' }
                   services:
+                    description: Every service with any span in the window, sorted by name. Services with no SERVER spans have server.population.sample_count = 0.
                     type: array
                     maxItems: 1000
                     items: { $ref: '#/components/schemas/ServiceSummary' }
@@ -161,14 +207,21 @@ paths:
         - $ref: '#/components/parameters/To'
       responses:
         '200':
-          description: Service detail with per-operation SERVER statistics and verified edges.
+          description: |
+            Service detail with per-operation SERVER statistics and verified edges. A service known in
+            retained data but with no spans in this window returns 200 with zero counts and
+            `service.observed_in_window = false`.
           headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ServiceDetail' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
-        '404': { $ref: '#/components/responses/NotFound' }
+        '404':
+          description: Service name never observed in retained data. code = not_found.
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
         '503': { $ref: '#/components/responses/Unavailable' }
 
   /v1/dependencies:
@@ -207,11 +260,40 @@ paths:
           schema: { type: integer, enum: [60, 300, 900, 3600], default: 300 }
       responses:
         '200':
-          description: Time series of observed SERVER span latency, throughput and errors.
+          description: |
+            Dense time series of observed SERVER span latency, throughput and errors. Every bucket in
+            the window is present; empty buckets have `stats: null`. Window/bucket combinations
+            producing more than 2,000 points are rejected (400 window_too_large).
           headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/LatencySeries' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '503': { $ref: '#/components/responses/Unavailable' }
+
+  /v1/analytics/latency-distribution:
+    get:
+      tags: [analytics]
+      operationId: getLatencyDistribution
+      summary: Get latency distribution
+      parameters:
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/ServiceFilter'
+        - name: operation
+          in: query
+          schema: { type: string, maxLength: 512 }
+      responses:
+        '200':
+          description: |
+            Histogram of observed SERVER span durations over fixed, server-defined log-spaced bucket
+            boundaries (stable across windows). Spans with negative duration are excluded and counted
+            in `excluded_negative_duration`.
+          headers: { Cache-Control: { $ref: '#/components/headers/NoStore' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LatencyDistribution' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
         '503': { $ref: '#/components/responses/Unavailable' }
@@ -310,6 +392,11 @@ components:
       in: path
       required: true
       schema: { $ref: '#/components/schemas/ServiceName' }
+    TraceIdPath:
+      name: traceId
+      in: path
+      required: true
+      schema: { $ref: '#/components/schemas/TraceId' }
     Cursor:
       name: cursor
       in: query
@@ -397,6 +484,16 @@ components:
         code:
           type: string
           enum: [invalid_parameter, window_too_large, cursor_invalid, cursor_filter_mismatch, unauthorized, forbidden, not_found, query_timeout, storage_unavailable, internal]
+        errors:
+          type: array
+          description: Field-level errors, present for invalid_parameter.
+          items:
+            type: object
+            required: [field, code, message]
+            properties:
+              field: { type: string, description: 'Query parameter name or JSON pointer into the request body.' }
+              code: { type: string, enum: [required, invalid_format, out_of_range, not_allowed] }
+              message: { type: string }
 
     Window:
       type: object
@@ -447,18 +544,39 @@ components:
           description: error_count / request_count; null when request_count = 0.
           oneOf: [{ type: number, minimum: 0, maximum: 1 }, { type: 'null' }]
         latency: { $ref: '#/components/schemas/Percentiles' }
+        exemplars:
+          type: object
+          description: Traces from the same population, for navigation from aggregates to evidence.
+          required: [slowest_trace_id, slowest_span_id, latest_error_trace_id, latest_error_span_id]
+          properties:
+            slowest_trace_id: { oneOf: [{ $ref: '#/components/schemas/TraceId' }, { type: 'null' }] }
+            slowest_span_id: { oneOf: [{ $ref: '#/components/schemas/SpanId' }, { type: 'null' }] }
+            latest_error_trace_id: { oneOf: [{ $ref: '#/components/schemas/TraceId' }, { type: 'null' }] }
+            latest_error_span_id: { oneOf: [{ $ref: '#/components/schemas/SpanId' }, { type: 'null' }] }
+
+    BucketStats:
+      type: object
+      description: Slim per-bucket stats; population is described once on LatencySeries.overall.
+      required: [sample_count, request_count, error_count, error_fraction, latency]
+      properties:
+        sample_count: { type: integer, minimum: 0 }
+        request_count: { type: integer, minimum: 0 }
+        error_count: { type: integer, minimum: 0 }
+        error_fraction: { oneOf: [{ type: number, minimum: 0, maximum: 1 }, { type: 'null' }] }
+        latency: { $ref: '#/components/schemas/Percentiles' }
 
     Overview:
       type: object
-      required: [window, freshness, totals, top_services, recent_traces]
+      required: [window, freshness, totals, trace_count, top_services, recent_traces]
       properties:
         window: { $ref: '#/components/schemas/Window' }
         freshness: { $ref: '#/components/schemas/Freshness' }
         totals: { $ref: '#/components/schemas/ServerStats' }
-        trace_count: { type: integer, minimum: 0 }
+        trace_count: { type: integer, minimum: 0, description: Traces whose summary start falls in the window (respects service filter). }
         top_services:
           type: array
           maxItems: 20
+          description: Ranked by server.request_count desc, then service_name asc. Respects the service filter.
           items: { $ref: '#/components/schemas/ServiceSummary' }
         recent_traces:
           type: array
@@ -503,14 +621,18 @@ components:
         error_span_count: { type: integer, minimum: 0 }
         service_names:
           type: array
+          maxItems: 50
+          description: Distinct services, sorted by first span start. Capped at 50; see service_count.
           items: { $ref: '#/components/schemas/ServiceName' }
+        service_count: { type: integer, minimum: 0 }
         completeness: { $ref: '#/components/schemas/TraceCompleteness' }
 
     TraceList:
       type: object
-      required: [window, items, next_cursor]
+      required: [window, freshness, items, next_cursor]
       properties:
         window: { $ref: '#/components/schemas/Window' }
+        freshness: { $ref: '#/components/schemas/Freshness' }
         items:
           type: array
           maxItems: 200
@@ -594,7 +716,8 @@ components:
 
     Span:
       type: object
-      required: [span_id, parent_span_id, parent_present, name, kind, start_unix_nano, end_unix_nano, duration_nano, status, service_name, resource_ref, scope_ref, attributes, events, links, quality]
+      description: In `detail=lite` responses attributes/events/links are absent; the *_count fields are always present.
+      required: [span_id, parent_span_id, parent_present, name, kind, start_unix_nano, end_unix_nano, duration_nano, status, service_name, resource_ref, scope_ref, attribute_count, event_count, link_count, quality]
       properties:
         span_id: { $ref: '#/components/schemas/SpanId' }
         parent_span_id:
@@ -620,6 +743,9 @@ components:
         attributes: { type: array, items: { $ref: '#/components/schemas/Attribute' } }
         events: { type: array, items: { $ref: '#/components/schemas/SpanEvent' } }
         links: { type: array, items: { $ref: '#/components/schemas/SpanLink' } }
+        attribute_count: { type: integer, minimum: 0 }
+        event_count: { type: integer, minimum: 0 }
+        link_count: { type: integer, minimum: 0 }
         dropped:
           type: object
           properties:
@@ -636,38 +762,69 @@ components:
 
     TraceDetail:
       type: object
-      required: [summary, spans, resources, scopes, freshness]
+      required: [summary, detail, spans, resources, scopes, truncation, freshness]
       properties:
         summary: { $ref: '#/components/schemas/TraceSummary' }
+        detail: { type: string, enum: [full, lite] }
         spans:
           type: array
           maxItems: 50000
-          description: Ordered by start_unix_nano asc, span_id asc.
+          description: Ordered by start_unix_nano asc, span_id asc. maxItems is the hard ceiling and equals the default Settings.limits.max_spans_per_trace.
           items: { $ref: '#/components/schemas/Span' }
         resources: { type: array, items: { $ref: '#/components/schemas/Resource' } }
         scopes: { type: array, items: { $ref: '#/components/schemas/InstrumentationScope' } }
+        truncation:
+          description: null unless the response cap was hit.
+          oneOf:
+            - type: object
+              required: [spans_total, spans_returned]
+              properties:
+                spans_total: { type: integer, minimum: 0 }
+                spans_returned: { type: integer, minimum: 0 }
+            - { type: 'null' }
+        freshness: { $ref: '#/components/schemas/Freshness' }
+
+    SpanDetail:
+      type: object
+      required: [trace_id, span, resource, scope, freshness]
+      properties:
+        trace_id: { $ref: '#/components/schemas/TraceId' }
+        span: { $ref: '#/components/schemas/Span' }
+        resource: { $ref: '#/components/schemas/Resource' }
+        scope: { $ref: '#/components/schemas/InstrumentationScope' }
         freshness: { $ref: '#/components/schemas/Freshness' }
 
     ServiceSummary:
       type: object
-      required: [service_name, last_observed_unix_nano, server]
+      required: [service_name, last_observed_unix_nano, observed_in_window, server, sample_error_trace_ids]
       properties:
         service_name: { $ref: '#/components/schemas/ServiceName' }
         last_observed_unix_nano: { $ref: '#/components/schemas/Nanos' }
+        observed_in_window: { type: boolean }
         server: { $ref: '#/components/schemas/ServerStats' }
+        sample_error_trace_ids:
+          type: array
+          maxItems: 3
+          description: Most recent traces with an error SERVER span of this service in the window.
+          items: { $ref: '#/components/schemas/TraceId' }
 
     OperationSummary:
       type: object
-      required: [name, server]
+      required: [name, server, sample_error_trace_ids]
       properties:
         name: { type: string }
         server: { $ref: '#/components/schemas/ServerStats' }
+        sample_error_trace_ids:
+          type: array
+          maxItems: 3
+          items: { $ref: '#/components/schemas/TraceId' }
 
     ServiceDetail:
       type: object
-      required: [window, service, operations, downstream, upstream, recent_traces]
+      required: [window, freshness, service, operations, downstream, upstream, recent_traces]
       properties:
         window: { $ref: '#/components/schemas/Window' }
+        freshness: { $ref: '#/components/schemas/Freshness' }
         service: { $ref: '#/components/schemas/ServiceSummary' }
         operations:
           type: array
@@ -694,7 +851,7 @@ components:
             basis:
               type: string
               enum: [client_server_parent_child, other_parent_child]
-              description: client_server when parent kind is CLIENT/PRODUCER and child kind is SERVER/CONSUMER.
+              description: client_server_parent_child when parent kind is CLIENT/PRODUCER and child kind is SERVER/CONSUMER; otherwise other_parent_child.
             parent_child_pairs: { type: integer, minimum: 1 }
             error_pairs: { type: integer, minimum: 0 }
             trace_count: { type: integer, minimum: 1 }
@@ -713,6 +870,7 @@ components:
         nodes:
           type: array
           maxItems: 500
+          description: Invariant — every edge source/target appears here. Services with only non-SERVER spans have server.population.sample_count = 0.
           items: { $ref: '#/components/schemas/ServiceSummary' }
         edges:
           type: array
@@ -722,32 +880,71 @@ components:
 
     LatencyPoint:
       type: object
-      required: [bucket_start_unix_nano, stats]
+      required: [bucket_start_unix_nano, partial, stats]
       properties:
         bucket_start_unix_nano: { $ref: '#/components/schemas/Nanos' }
+        partial:
+          type: boolean
+          description: True when the bucket end is after freshness.generated_at (still filling).
         stats:
           description: null when bucket has no observations (do not interpolate).
-          oneOf: [{ $ref: '#/components/schemas/ServerStats' }, { type: 'null' }]
+          oneOf: [{ $ref: '#/components/schemas/BucketStats' }, { type: 'null' }]
 
     LatencySeries:
       type: object
-      required: [window, bucket_seconds, points, overall]
+      required: [window, freshness, bucket_seconds, points, overall]
       properties:
         window: { $ref: '#/components/schemas/Window' }
+        freshness: { $ref: '#/components/schemas/Freshness' }
         bucket_seconds: { type: integer }
         service: { $ref: '#/components/schemas/ServiceName' }
         operation: { type: string }
         points:
           type: array
-          maxItems: 10080
+          maxItems: 2000
           items: { $ref: '#/components/schemas/LatencyPoint' }
         overall: { $ref: '#/components/schemas/ServerStats' }
 
-    IngestionStatus:
+    LatencyDistribution:
       type: object
-      required: [window, requests, spans_received, spans_accepted, spans_duplicate, spans_rejected, reject_reasons, spans_conflict]
+      required: [window, freshness, population, buckets, excluded_negative_duration]
       properties:
         window: { $ref: '#/components/schemas/Window' }
+        freshness: { $ref: '#/components/schemas/Freshness' }
+        service: { $ref: '#/components/schemas/ServiceName' }
+        operation: { type: string }
+        population: { $ref: '#/components/schemas/Population' }
+        buckets:
+          type: array
+          description: Fixed log-spaced boundaries from 0 to 60 s plus one open-ended bucket (≈ 25 buckets). All buckets present, including zero counts.
+          maxItems: 64
+          items:
+            type: object
+            required: [lower_nano, upper_nano, count]
+            properties:
+              lower_nano: { $ref: '#/components/schemas/Nanos' }
+              upper_nano:
+                description: Exclusive upper bound; null for the last, open-ended bucket.
+                oneOf: [{ $ref: '#/components/schemas/Nanos' }, { type: 'null' }]
+              count: { type: integer, minimum: 0 }
+        excluded_negative_duration: { type: integer, minimum: 0 }
+
+    RejectReason:
+      type: string
+      enum: [invalid_id, invalid_timestamp, invalid_span, conflicting_replay, trace_span_limit]
+
+    IngestionStatus:
+      type: object
+      required: [window, freshness, requests, spans_received, spans_accepted, spans_duplicate, spans_rejected, reject_reasons, spans_conflict, latest_trace_id, first_span_received_at]
+      properties:
+        window: { $ref: '#/components/schemas/Window' }
+        freshness: { $ref: '#/components/schemas/Freshness' }
+        latest_trace_id:
+          description: Most recently received trace in the window (onboarding "first trace" link).
+          oneOf: [{ $ref: '#/components/schemas/TraceId' }, { type: 'null' }]
+        first_span_received_at:
+          description: First span ever received by this deployment (not window-scoped).
+          oneOf: [{ $ref: '#/components/schemas/Nanos' }, { type: 'null' }]
         requests:
           type: object
           additionalProperties: { type: integer }
@@ -759,16 +956,24 @@ components:
         spans_conflict: { type: integer }
         reject_reasons:
           type: object
+          description: Count of rejected spans keyed by RejectReason values.
+          propertyNames: { $ref: '#/components/schemas/RejectReason' }
           additionalProperties: { type: integer }
         last_request_at:
           oneOf: [{ $ref: '#/components/schemas/Nanos' }, { type: 'null' }]
 
     Settings:
       type: object
-      required: [profile, retention_days, limits]
+      required: [generated_at, profile, read_only, retention_days, next_retention_run, limits]
       properties:
+        generated_at: { $ref: '#/components/schemas/Nanos' }
         profile: { type: string, enum: [local-dev, operator-prod, public-demo] }
+        read_only:
+          type: boolean
+          description: True when updateSettings is unavailable; UI must not offer editing.
         retention_days: { type: integer, minimum: 1, maximum: 90 }
+        next_retention_run:
+          oneOf: [{ $ref: '#/components/schemas/Nanos' }, { type: 'null' }]
         last_retention_run:
           oneOf:
             - type: object
