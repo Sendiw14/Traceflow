@@ -1,0 +1,16 @@
+# secrets
+.env
+.env.*
+!.env.example
+# build output
+/services/trace-api/bin/
+node_modules/
+.next/
+dist/
+coverage/
+playwright-report/
+test-results/
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

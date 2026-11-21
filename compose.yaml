@@ -1,0 +1,57 @@
+# TRACEFLOW local-dev stack (docs/architecture/deployment-topology.md).
+# Nothing is published to the host in M2: all networks are internal.
+# Usage: make env && make up
+name: traceflow
+
+services:
+  postgres:
+    image: postgres:18.7@sha256:eb63372c1e05c755f55fa30cbd07aecc443676fc6c0fa90b9002d01537841e1a
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  trace-api:
+    build: ./services/trace-api
+    environment:
+      TRACEFLOW_PROFILE: ${TRACEFLOW_PROFILE:?set in .env}
+      TRACEFLOW_DATABASE_URL: ${TRACEFLOW_DATABASE_URL:?set in .env}
+      TRACEFLOW_SERVICE_TOKEN: ${TRACEFLOW_SERVICE_TOKEN:?run make env}
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [app, ingest, data]
+    healthcheck:
+      test: ["CMD", "/trace-api", "healthcheck"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.165.0@sha256:e40d61f10c9a617cca1ffd1be4d7e2b3a4b0f0001798ff07e58cabe82e618cea
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./infra/otel/collector.yaml:/etc/otelcol/config.yaml:ro
+    networks: [ingest]
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
+networks:
+  app: { internal: true }
+  ingest: { internal: true }
+  data: { internal: true }
+
+volumes:
+  pgdata:

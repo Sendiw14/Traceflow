@@ -1,0 +1,73 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  go:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: services/trace-api
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: 1.27.4
+          cache-dependency-path: services/trace-api/go.sum
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: go build ./cmd/server
+
+  contracts:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: OpenAPI lint
+        run: npx -y @redocly/cli@2 lint api/openapi.yaml
+      - name: Collector config validate
+        run: docker run --rm -v "$PWD/infra/otel/collector.yaml:/c.yaml:ro" otel/opentelemetry-collector-contrib:0.165.0@sha256:e40d61f10c9a617cca1ffd1be4d7e2b3a4b0f0001798ff07e58cabe82e618cea validate --config=/c.yaml
+
+  secrets:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: gitleaks (history)
+        run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f git /repo --redact --no-banner
+
+  compose-smoke:
+    runs-on: ubuntu-24.04
+    needs: [go, contracts]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: make env
+      - run: make up
+      - name: Probe trace-api from the app network
+        run: |
+          set -a; . ./.env; set +a
+          c(){ docker run --rm --network traceflow_app curlimages/curl:8.17.0 -s -o /dev/null -w "%{http_code}" "$@"; }
+          test "$(c http://trace-api:8080/livez)" = 200
+          test "$(c http://trace-api:8080/readyz)" = 200
+          test "$(c http://trace-api:8080/v1/overview)" = 401
+          test "$(c -H "Authorization: Bearer $TRACEFLOW_SERVICE_TOKEN" http://trace-api:8080/v1/overview)" = 404
+          test "$(docker compose ps --format '{{.Publishers}}' | grep -c '0.0.0.0\|127.0.0.1')" = 0
+      - if: failure()
+        run: docker compose logs --tail=200
+      - if: always()
+        run: docker compose down -v

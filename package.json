@@ -1,0 +1,12 @@
+{
+  "name": "traceflow",
+  "private": true,
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "lint:api": "pnpm --package=@redocly/cli@2 dlx redocly lint api/openapi.yaml"
+  }
+}
