@@ -1,6 +1,6 @@
 # ADR-0001: Modular monolith with Next.js BFF
 
-- **Status:** Proposed (M1)
+- **Status:** Accepted — M1 contract freeze 1.0.0, owner sign-off 2026-11-22
 - **Date:** 2026-11-22
 - **Requirements:** SCOPE-02, SCOPE-05, NFR-07
 

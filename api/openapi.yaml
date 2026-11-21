@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TRACEFLOW Query API
-  version: 0.2.1-draft
+  version: 1.0.0
   summary: Internal query API between the Next.js BFF and trace-api. Not exposed to browsers.
   description: |
     Conventions (ADR-0004):

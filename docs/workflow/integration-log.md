@@ -71,3 +71,21 @@ KNOWN FAILURES / UNTESTED: no codegen/contract tests run; 8 non-blocking notes N
 DEPENDENCIES / NEXT HANDOFF: Opus considers N-1..N-8 (0.2.1 or at freeze) → freeze sign-off (Opus + Sonnet + owner)
 FINAL: NOT TESTED (verdict APPROVED on document review only)
 ```
+
+## M1-FREEZE — Contract freeze 1.0.0
+
+```text
+TASK_ID: M1-FREEZE | BASE_COMMIT_SHA: 21a703a (merge of design branch) | BRANCH/PR: main (local only, not pushed)
+MODEL/EFFORT/ULTRACODE VERIFIED: claude-opus-5-5 / NOT TESTED / NOT TESTED
+OWNER: Opus coordinator | REVIEWER: Sonnet (APPROVED API 0.2.0), owner (approved freeze in chat)
+REQUIREMENT_IDS: AC-API-01..03 (contract), SCOPE-01..10 (design inputs)
+FILES_CHANGED: api/openapi.yaml (1.0.0), docs/adr/0001..0004 (Accepted), docs/architecture/api-contract.md, docs/workflow/{contract-freeze,task-board,integration-log}.md
+CONTRACT_VERSION CONSUMED / CONTRACT_CHANGES: 0.2.1-draft → 1.0.0 (version only)
+BEHAVIOUR IMPLEMENTED: none
+SECURITY / DATA IMPACT: none; security docs NOT frozen, pending independent review
+COMMANDS RUN + ACTUAL RESULTS: redocly lint → valid, 2 accepted warnings; `python3 -I docs/design/tools/contrast.py` re-run by Opus → all text pairs ≥ 4.5:1, UI pairs ≥ 3:1
+TEST FIXTURES: none generated
+KNOWN FAILURES / UNTESTED: no codegen or contract tests yet; capacity provisional; effort/Ultracode unverified
+DEPENDENCIES / NEXT HANDOFF: M2-001..003
+FINAL: PASS (M1 contract freeze recorded) — readiness level (A) planning baseline only
+```

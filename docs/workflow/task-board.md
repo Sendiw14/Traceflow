@@ -8,9 +8,13 @@
 | M1-B3 `api/openapi.yaml` 0.2.1-draft | Opus | DRAFTED, lint valid | Sonnet APPROVED 0.2.0; notes folded into 0.2.1 |
 | M1-B4 Capacity profile | Opus | PROVISIONAL | numbers assumed until M3 measure |
 | M1-B5 Threat model, authz matrix, privacy | Opus | DRAFTED | independent review + owner sign-off |
-| M1-D1 Design system: identity, tokens, typography, grid, chart palette | Sonnet | TODO | `docs/design/` |
-| M1-D2 Page matrix + data-to-UI bindings against `api/openapi.yaml` | Sonnet | TODO | |
-| M1-D3 Component inventory, motion spec, accessibility matrix, asset inventory | Sonnet | TODO | |
-| M1-D4 Creative benchmark/moodboard study (spec §9.2) | Sonnet | TODO | read-only research |
-| M1-R1 Sonnet consumer review of OpenAPI | Sonnet | TODO | answers questions in `api-contract.md` |
-| M1-FREEZE Contract freeze v1.0.0 sign-off | Opus + Sonnet + owner | AWAITING OWNER | design on branch claude/vigorous-yalow-e6f487, not merged |
+| M1-D1 Design system: identity, tokens, typography, grid, chart palette | Sonnet | DONE (frozen) | `docs/design/` |
+| M1-D2 Page matrix + data-to-UI bindings against `api/openapi.yaml` | Sonnet | DONE (frozen) | |
+| M1-D3 Component inventory, motion spec, accessibility matrix, asset inventory | Sonnet | DONE (frozen) | |
+| M1-D4 Creative benchmark/moodboard study (spec §9.2) | Sonnet | DONE (frozen) | read-only research |
+| M1-R1 Sonnet consumer review of OpenAPI | Sonnet | DONE (APPROVED) | answers questions in `api-contract.md` |
+| M1-FREEZE Contract freeze v1.0.0 sign-off | Opus + Sonnet + owner | DONE 2026-11-22 | see contract-freeze.md |
+| M2-001 Monorepo scaffold, Compose, CI, tool locks, empty app skeleton | Opus (infra) + Sonnet (web shell) | TODO | next gate |
+| M2-002 Auth spike (better-auth) for ADR-0005 | Opus | TODO | |
+| M2-003 Verify Collector v0.165.0 `sending_queue.batch` | Opus | TODO | ADR-0003 |
+| SEC-REVIEW Independent read-only review of docs/security | independent reviewer + owner | TODO | |

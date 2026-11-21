@@ -1,6 +1,6 @@
 # App API Contract Notes (M1 draft)
 
-**Status:** DRAFT 0.2.1 (consumer-approved; freeze pending owner). Source of truth: `api/openapi.yaml` (lint: `npx @redocly/cli@2 lint api/openapi.yaml` → valid, 2 accepted warnings: health probes have no 4xx). Conventions: ADR-0004. Consumer review: `docs/design/openapi-consumer-review.md` (on Sonnet branch until merged). Sonnet approved 0.2.0; 0.2.1 applies only its non-blocking notes.
+**Status:** FROZEN 1.0.0 (M1, 2026-11-22). Changes need an ADR or change PR, a version bump, client regeneration and both contract suites. Source of truth: `api/openapi.yaml` (lint: `npx @redocly/cli@2 lint api/openapi.yaml` → valid, 2 accepted warnings: health probes have no 4xx). Conventions: ADR-0004. Consumer review: `docs/design/openapi-consumer-review.md` (on Sonnet branch until merged). Sonnet approved 0.2.0; 0.2.1 applies only its non-blocking notes.
 
 ## Endpoint → route mapping
 

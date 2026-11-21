@@ -1,6 +1,6 @@
 # ADR-0004: App query API conventions and code generation
 
-- **Status:** Proposed (M1) — revised for Sonnet consumer review (API 0.2.0-draft); re-review pending
+- **Status:** Accepted — M1 contract freeze 1.0.0, owner sign-off 2026-11-22
 - **Date:** 2026-11-22
 - **Requirements:** AC-API-01…03, AC-DATA-02
 

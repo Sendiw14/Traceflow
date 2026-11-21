@@ -1,6 +1,6 @@
 # ADR-0002: Span storage, deduplication and replay-conflict policy
 
-- **Status:** Proposed (M1)
+- **Status:** Accepted — M1 contract freeze 1.0.0, owner sign-off 2026-11-22
 - **Date:** 2026-11-22
 - **Requirements:** SCOPE-03, SCOPE-04, AC-OTLP-07, AC-DATA-04
 
