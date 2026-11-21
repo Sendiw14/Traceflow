@@ -114,3 +114,17 @@ KNOWN FAILURES / UNTESTED: GitHub Actions run NOT TESTED (not pushed); Node 26 N
 DEPENDENCIES / NEXT HANDOFF: M2-001b apps/web shell (Sonnet) → M2-001c web in Compose/CI → M2-002 auth spike
 FINAL: PASS (local evidence) / NOT TESTED (CI)
 ```
+
+## M2-001b — apps/web shell (INCOMPLETE: usage limit reached)
+
+```text
+TASK_ID: M2-001b | BASE_COMMIT_SHA: 8da2226 | BRANCH/PR: m2-web-shell (local only, not pushed)
+MODEL/EFFORT/ULTRACODE VERIFIED: claude-sonnet-5-5 / NOT TESTED / NOT TESTED | OWNER: Sonnet | REVIEWER: Opus (ADR-0006, Dockerfile, CI/Compose)
+FILES_CHANGED: apps/web/** (package.json, tsconfig, next.config.ts, eslint/vitest/playwright configs, src/app/{layout,page,not-found,error,tokens.css,globals.css}, src/app/app/{layout,page}.tsx, src/lib/time/nanos(+test).ts, src/lib/api/client.ts, e2e/smoke.spec.ts, Dockerfile), pnpm-lock.yaml (created by pnpm install), docs/adr/0006-typescript-version.md
+COMMANDS RUN + ACTUAL RESULTS (local Node v24.11.1, NOT 26; pnpm 9.15.9; deps next 16.4.6, react 19.3.1, tailwind 4.3.5, TS 6.0.3):
+ gen:api → PASS (after TS 7.0.2 failed in openapi-typescript; ADR-0006) | typecheck → PASS | lint → PASS (0 errors, 2 warnings: import/no-anonymous-default-export in postcss.config.mjs + one more) | test → PASS 4/4 (after fixing a bug in my own test) | build → PASS (routes /, /_not-found, /app)
+NOT TESTED: Playwright smoke (browsers not installed, test never run); no-store header on /app via `next start` (config written, not verified; note /app prerendered static); Docker build; Node 26; axe
+CI/COMPOSE REQUEST FOR OPUS: CI job `web`: setup-node 26, `pnpm install --frozen-lockfile`, `pnpm -C apps/web gen:api && git diff --exit-code apps/web/src/lib/api/generated` (NOTE: generated dir is currently gitignored? NO — committed? see below), lint, typecheck, test, build. Compose service `web`: build context repo root, `dockerfile: apps/web/Dockerfile`, port 3000, env TRACE_API_URL + service token, depends_on trace-api.
+KNOWN ISSUES: generated schema.d.ts was created by gen:api; verify it is committed (spec says generated files are checked in per ADR-0004). TRACE_API env vars not yet read anywhere.
+FINAL: PARTIAL — lint/typecheck/test/build/gen:api PASS locally; e2e, Docker, header check NOT TESTED
+```
