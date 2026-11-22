@@ -27,7 +27,6 @@ WORKDIR /app
 RUN addgroup -S -g 10001 app && adduser -S -u 10001 -G app app
 COPY --from=build --chown=app:app /repo/apps/web/.next/standalone ./
 COPY --from=build --chown=app:app /repo/apps/web/.next/static ./apps/web/.next/static
-COPY --from=build --chown=app:app /repo/apps/web/public ./apps/web/public
 USER 10001:10001
 EXPOSE 3000
 CMD ["node", "apps/web/server.js"]

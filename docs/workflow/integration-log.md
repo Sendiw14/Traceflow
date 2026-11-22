@@ -178,3 +178,5 @@ FINAL: PASS
 ```
 
 M2-001b follow-up (2026-11-22): apps/web/Dockerfile replaced `corepack enable && corepack prepare` with `npm install -g pnpm@9.15.9` (Node 25+ images lack corepack, CI exit 127). Docker build NOT TESTED locally; CI compose-smoke is the check.
+
+M2-001b follow-up 2 (2026-11-22): removed `COPY ... apps/web/public` from apps/web/Dockerfile; dir not in git (no static assets yet). Re-add the COPY when a real asset lands. Docker build NOT TESTED locally; CI compose-smoke is the check.
