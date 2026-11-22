@@ -111,7 +111,10 @@ jobs:
           test "$(c http://trace-api:8080/livez)" = 200
           test "$(c http://trace-api:8080/readyz)" = 200
           test "$(c http://trace-api:8080/v1/overview)" = 401
-          test "$(c -H "Authorization: Bearer $TRACEFLOW_SERVICE_TOKEN" http://trace-api:8080/v1/overview)" = 404
+          auth=(-H "Authorization: Bearer $TRACEFLOW_SERVICE_TOKEN")
+          test "$(c "${auth[@]}" http://trace-api:8080/v1/overview)" = 400            # from/to required
+          test "$(c "${auth[@]}" "http://trace-api:8080/v1/overview?from=0&to=3600000000000")" = 200
+          test "$(c "${auth[@]}" http://trace-api:8080/v1/no-such-endpoint)" = 404
       - name: Only web is published, and only on loopback
         run: |
           pubs=$(docker compose ps --format json | jq -rs 'flatten | .[] | .Service as $s | .Publishers[]? | select(.PublishedPort > 0) | "\($s) \(.URL):\(.PublishedPort)"' | sort -u)
