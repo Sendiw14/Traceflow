@@ -155,3 +155,11 @@ Configurable days (`settings.retention_days`). Job deletes `trace_summaries` who
 
 ## Reject reason codes
 Stable codes counted in `ingestion_records.reject_reasons` and exposed as `RejectReason` in the API: `invalid_id`, `invalid_timestamp` (zero, > int64, or unparseable), `invalid_span` (other structural faults), `conflicting_replay`, `trace_span_limit`. Adding a code is an API change.
+
+## M3 implementation deltas (additive, no API change)
+- `trace_summaries.skew_span_count` backs API `TraceCompleteness.has_clock_skew`.
+- Extra index `spans_parent (workspace_id, trace_id, parent_span_id)` for orphan recompute; `trace_summaries_last_received` for retention.
+- goose's version table replaces `schema_info`.
+- Text fields and JSON strings are sanitized before storage: invalid UTF-8 and NUL become U+FFFD (PostgreSQL rejects both; one bad span must not fail the whole request).
+- Span names truncated at 1 KiB, trace_state at 512 B; NaN/±Inf doubles stored as strings (not representable in JSON).
+- Requests rejected before storage (bad protobuf, too many spans) are recorded best-effort in `ingestion_records` with their HTTP status.

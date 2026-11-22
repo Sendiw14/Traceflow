@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Command server runs trace-api. M2: query listener with health probes only;
-// ingest (M3) and query endpoints (M4) are not implemented yet.
+// Command server runs trace-api: OTLP/HTTP ingest listener (M3) and the query
+// listener (health probes now; query endpoints land in M4).
 package main
 
 import (
@@ -16,10 +16,13 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/Sendiw14/Traceflow/services/trace-api/db"
 	"github.com/Sendiw14/Traceflow/services/trace-api/internal/authz"
 	"github.com/Sendiw14/Traceflow/services/trace-api/internal/config"
+	"github.com/Sendiw14/Traceflow/services/trace-api/internal/ingest"
 	"github.com/Sendiw14/Traceflow/services/trace-api/internal/ops"
 	"github.com/Sendiw14/Traceflow/services/trace-api/internal/problem"
+	"github.com/Sendiw14/Traceflow/services/trace-api/internal/store"
 )
 
 func main() {
@@ -84,18 +87,31 @@ func run(log *slog.Logger) error {
 	}
 	defer pool.Close()
 
-	srv := &http.Server{
-		Addr:              cfg.QueryAddr,
-		Handler:           newQueryHandler(cfg, pool),
-		ReadHeaderTimeout: 5 * time.Second,
-		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       60 * time.Second,
-		MaxHeaderBytes:    16 << 10,
+	// public-demo runs read-only against a pre-seeded database (deployment-topology.md).
+	// shortcut: runtime role applies migrations in local-dev/operator-prod; split into a
+	// migrate role and one-shot job at M6 (data-model.md DB roles).
+	if cfg.Profile != config.ProfilePublicDemo {
+		if err := db.Migrate(pool); err != nil {
+			return err
+		}
+		log.Info("migrations applied")
 	}
-	errc := make(chan error, 1)
-	go func() { errc <- srv.ListenAndServe() }()
-	log.Info("query listener up", "addr", cfg.QueryAddr)
+
+	servers := []*http.Server{newServer(cfg.QueryAddr, newQueryHandler(cfg, pool))}
+	if cfg.IngestAddr != "" {
+		mux := http.NewServeMux()
+		mux.Handle("/v1/traces", ingest.NewHandler(store.New(pool), ingest.DefaultLimits, log))
+		mux.Handle("GET /livez", ops.Liveness())
+		servers = append(servers, newServer(cfg.IngestAddr, mux))
+	}
+	if cfg.Profile != config.ProfilePublicDemo {
+		go retentionLoop(ctx, store.New(pool), log)
+	}
+	errc := make(chan error, len(servers))
+	for _, s := range servers {
+		go func(s *http.Server) { errc <- s.ListenAndServe() }(s)
+		log.Info("listener up", "addr", s.Addr)
+	}
 
 	select {
 	case err := <-errc:
@@ -104,5 +120,41 @@ func run(log *slog.Logger) error {
 	}
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	return srv.Shutdown(shutdownCtx)
+	var errs []error
+	for _, s := range servers {
+		errs = append(errs, s.Shutdown(shutdownCtx))
+	}
+	return errors.Join(errs...)
+}
+
+// retentionLoop runs retention shortly after start and then hourly.
+func retentionLoop(ctx context.Context, st *store.Store, log *slog.Logger) {
+	t := time.NewTimer(time.Minute)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+		}
+		r, err := st.RunRetention(ctx, time.Now())
+		if err != nil {
+			log.Warn("retention run failed", "err", err.Error(), "status", r.Status)
+		} else {
+			log.Info("retention run", "traces_deleted", r.TracesDeleted, "spans_deleted", r.SpansDeleted)
+		}
+		t.Reset(time.Hour)
+	}
+}
+
+func newServer(addr string, h http.Handler) *http.Server {
+	return &http.Server{
+		Addr:              addr,
+		Handler:           h,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       30 * time.Second, // ingest bodies up to 4 MiB on slow links
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    16 << 10,
+	}
 }

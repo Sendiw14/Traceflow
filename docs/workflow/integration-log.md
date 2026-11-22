@@ -209,3 +209,21 @@ KNOWN FAILURES / UNTESTED:
 READINESS: (B) code foundation ready — pending owner gate approval. No ingest/query functionality yet.
 FINAL: PASS (M2 gate criteria) — awaiting owner sign-off
 ```
+
+## M3 — Ingest (Collector → Go → PostgreSQL)
+
+```text
+TASK_ID: M3-001..004 | BASE_COMMIT_SHA: 5dc31ff | BRANCH/PR: main
+MODEL/EFFORT/ULTRACODE VERIFIED: claude-opus-5-5 / NOT TESTED / NOT TESTED
+OWNER: Opus | REVIEWER: pending independent backend/OTLP review
+REQUIREMENT_IDS: SCOPE-01..04, AC-OTLP-01..07, AC-DATA-01/02/04, NFR-02 (redaction layer 2), NFR-06
+FILES_CHANGED: services/trace-api/{db/**, internal/{ingest,normalize,store}/**, cmd/server/main.go, internal/config}, examples/demo-system/**, compose.yaml, .github/workflows/ci.yml, docs (ADR-0002 notes, data-model deltas, matrix, board)
+BEHAVIOUR: POST /v1/traces (protobuf, identity/gzip; 405/415/413/400/429/503 with google.rpc.Status; 200 ExportTraceServiceResponse, partial_success on rejects); 200 only after commit; per-trace advisory lock; identical replay = accepted duplicate; conflicting replay = first write wins + span_conflicts + rejected; summary recompute (roots, orphans, skew, errors, services by first start); limits (4 MiB/16 MiB, 10k spans/request, 50k/trace, attribute/event/link caps); UTF-8/NUL sanitizing; Go-side redaction; retention job hourly
+COMMANDS RUN + ACTUAL RESULTS (local, PostgreSQL 18.7 container):
+  go test -race -count=1 ./... → ok (cmd/server, config, ingest, normalize, store incl. 12 integration tests)
+  mutation: per-trace lock removed → TestConcurrentWritersSameTrace "summary span_count=450 want 1200"; TestSummaryNotLostWhenWriterCommitsLate fails → lock restored, both pass
+  stack (host-built binaries, local override): demo load → 5 traces / 32 spans via Collector otlp_http, 0 rejected; shapes normal 6/1/0, slow 6/1/0 823 ms, error 6/1/0 with 5 error spans + exception event, parallel 9/1/0, missing-parent 5/0/1; parent chain gateway S→C→orders S→C→inventory S→DB C
+  actionlint → clean; gitleaks on new files → clean
+KNOWN FAILURES / UNTESTED: local Docker builds cannot fetch Go modules (TLS/stream errors) → real Dockerfile builds only in CI; OTLP-19 (direct SDK retry on 503) NOT TESTED; Collector restart/overflow drills NOT TESTED; persistent queue not configured; migrations run with runtime role (shortcut until M6); no load test yet (M4)
+FINAL: PASS (local) — CI run pending
+```

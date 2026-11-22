@@ -58,6 +58,30 @@ services:
     security_opt: ["no-new-privileges:true"]
     restart: unless-stopped
 
+  # Demo system (examples/demo-system): synthetic traffic only.
+  gateway: &demo
+    build: ./examples/demo-system
+    command: ["gateway"]
+    depends_on:
+      collector: { condition: service_started }
+    networks: [ingest, demo]
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+  orders:
+    <<: *demo
+    command: ["orders"]
+  inventory:
+    <<: *demo
+    command: ["inventory"]
+  # One-shot: `docker compose run --rm load` prints "scenario trace_id status" per scenario.
+  load:
+    build: ./examples/demo-system
+    command: ["load"]
+    networks: [demo]
+    profiles: [tools]
+    depends_on: [gateway, orders, inventory]
+
   collector:
     image: otel/opentelemetry-collector-contrib:0.165.0@sha256:e40d61f10c9a617cca1ffd1be4d7e2b3a4b0f0001798ff07e58cabe82e618cea
     command: ["--config=/etc/otelcol/config.yaml"]
@@ -73,6 +97,7 @@ networks:
   app: { internal: true }
   ingest: { internal: true }
   data: { internal: true }
+  demo: { internal: true }
 
 volumes:
   pgdata:

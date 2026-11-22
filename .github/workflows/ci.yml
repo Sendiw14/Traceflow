@@ -15,6 +15,16 @@ concurrency:
 jobs:
   go:
     runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:18.7@sha256:eb63372c1e05c755f55fa30cbd07aecc443676fc6c0fa90b9002d01537841e1a
+        env:
+          POSTGRES_PASSWORD: ci-only
+        ports: ["127.0.0.1:5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 2s --health-retries 30
+    env:
+      TRACEFLOW_TEST_DATABASE_URL: postgres://postgres:ci-only@127.0.0.1:5432/postgres?sslmode=disable
     defaults:
       run:
         working-directory: services/trace-api
@@ -23,12 +33,21 @@ jobs:
       - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version: 1.27.4
-          cache-dependency-path: services/trace-api/go.sum
+          cache-dependency-path: |
+            services/trace-api/go.sum
+            examples/demo-system/go.sum
       - name: gofmt
         run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
       - run: go vet ./...
-      - run: go test -race ./...
+      - name: go test -race (incl. PostgreSQL integration)
+        run: go test -race -count=1 ./...
       - run: go build ./cmd/server
+      - name: demo-system vet + build
+        working-directory: examples/demo-system
+        run: |
+          test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+          go vet ./...
+          go build ./...
 
   contracts:
     runs-on: ubuntu-24.04
@@ -104,6 +123,25 @@ jobs:
           if docker compose exec -T web node -e "require('net').connect(5432,'postgres').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"; then
             echo "web reached postgres"; exit 1
           fi
+      - name: Demo SDK → Collector → trace-api → PostgreSQL (OTLP-18, DATA-01/05-08)
+        run: |
+          set -a; . ./.env; set +a
+          docker compose run --rm load | tee load.out
+          test "$(wc -l < load.out)" -eq 5
+          for _ in $(seq 1 30); do
+            n=$(docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "select count(*) from trace_summaries")
+            [ "$n" -ge 5 ] && break; sleep 2
+          done
+          q(){ docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "$1"; }
+          shape(){ q "select span_count||' '||root_count||' '||orphan_count||' '||(error_span_count>0) from trace_summaries where trace_id=decode('$(awk -v s="$1" '$1==s{print $2}' load.out)','hex')"; }
+          test "$(shape normal)" = "6 1 0 false"
+          test "$(shape slow)" = "6 1 0 false"
+          test "$(shape error)" = "6 1 0 true"
+          test "$(shape parallel)" = "9 1 0 false"
+          test "$(shape missing-parent)" = "5 0 1 false"
+          slow=$(q "select root_duration_nano from trace_summaries where trace_id=decode('$(awk '$1=="slow"{print $2}' load.out)','hex')")
+          test "$slow" -ge 800000000
+          test "$(q "select count(*) from ingestion_records where source='collector' and http_status=200")" -ge 1
       - if: failure()
         run: docker compose logs --tail=200
       - if: always()

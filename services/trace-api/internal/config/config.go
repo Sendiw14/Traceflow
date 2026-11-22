@@ -26,6 +26,7 @@ type Config struct {
 	DatabaseURL  string
 	ServiceToken string
 	QueryAddr    string
+	IngestAddr   string // empty = ingest listener disabled (always empty in public-demo)
 }
 
 // Load reads configuration via getenv (os.Getenv in production) and validates it.
@@ -35,9 +36,13 @@ func Load(getenv func(string) string) (Config, error) {
 		DatabaseURL:  getenv("TRACEFLOW_DATABASE_URL"),
 		ServiceToken: getenv("TRACEFLOW_SERVICE_TOKEN"),
 		QueryAddr:    getenv("TRACEFLOW_QUERY_ADDR"),
+		IngestAddr:   getenv("TRACEFLOW_INGEST_ADDR"),
 	}
 	if c.QueryAddr == "" {
 		c.QueryAddr = ":8080"
+	}
+	if c.IngestAddr == "" && c.Profile != ProfilePublicDemo {
+		c.IngestAddr = ":4318"
 	}
 
 	var errs []error
@@ -72,5 +77,5 @@ func (c Config) Redacted() string {
 			db = db[:scheme+3] + "***" + db[at:]
 		}
 	}
-	return fmt.Sprintf("profile=%s query_addr=%s database=%s", c.Profile, c.QueryAddr, db)
+	return fmt.Sprintf("profile=%s query_addr=%s ingest_addr=%s database=%s", c.Profile, c.QueryAddr, c.IngestAddr, db)
 }

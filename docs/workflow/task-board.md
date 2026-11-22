@@ -22,4 +22,9 @@
 | M2-002 Auth spike (better-auth) for ADR-0005 | Opus | DONE — PASS 24/24 (mocked GitHub) | docs/testing/auth-spike.md |
 | M2-003 Verify Collector v0.165.0 `sending_queue.batch` | Opus | DONE (config schema PASS; export NOT TESTED until M3) | exporter name `otlp_http` |
 | SEC-REVIEW Independent read-only review of docs/security | independent reviewer + owner | TODO | |
-| M2-GATE M2 exit review | Opus + owner | READY FOR OWNER | see integration-log M2-GATE |
+| M2-GATE M2 exit review | Opus + owner | APPROVED by owner 2026-11-22 | readiness (B) code foundation |
+| M3-001 Migration, OTLP receiver, normalize/redact, store (dedupe, conflicts, summaries, limits) | Opus | DONE (local evidence) | fixtures OTLP-01..17 |
+| M3-002 Demo system (gateway→orders→inventory, 5 scenarios) + Collector interop | Opus | DONE (local, host-built binaries) | OTLP-18, DATA-01/05-08 |
+| M3-003 Retention job | Opus | DONE | |
+| M3-004 CI: Postgres integration + interop smoke | Opus | PENDING CI RUN | |
+| M3-OPEN OTLP-19 direct SDK retry-on-503 test; persistent Collector queue eval; failure drills (PG/Collector restart) | Opus | TODO | M6 at latest |

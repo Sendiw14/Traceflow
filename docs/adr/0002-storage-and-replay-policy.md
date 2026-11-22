@@ -23,3 +23,9 @@ OTLP delivery is at-least-once (Collector retries, SDK retries). Same span may a
 
 ## Alternatives rejected
 Last-write-wins (silent corruption); reject entire request on conflict (punishes valid spans in same batch).
+
+## Implementation notes (M3, 2026-11-22)
+- Summaries are **recomputed from stored spans** per touched trace (not delta-maintained) inside the ingest transaction; simpler and correct for late/out-of-order spans.
+- Writers to the same trace are serialized with `pg_advisory_xact_lock` on the first 8 trace-ID bytes, taken in sorted trace order (no deadlocks). Proven necessary: with the lock removed, `TestConcurrentWritersSameTrace` lost 750 of 1,200 spans and `TestSummaryNotLostWhenWriterCommitsLate` failed deterministically.
+- Resource/scope dedup rows use `ON CONFLICT DO NOTHING` + lookup, not `DO UPDATE`, so concurrent requests from one service do not serialize on a row lock held until commit.
+- At the per-trace span cap, already-stored spans are still recognized as duplicates (accepted); only new spans are rejected `trace_span_limit`.
