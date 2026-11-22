@@ -114,3 +114,21 @@ KNOWN FAILURES / UNTESTED: GitHub Actions run NOT TESTED (not pushed); Node 26 N
 DEPENDENCIES / NEXT HANDOFF: M2-001b apps/web shell (Sonnet) → M2-001c web in Compose/CI → M2-002 auth spike
 FINAL: PASS (local evidence) / NOT TESTED (CI)
 ```
+
+## M2-001b — apps/web shell
+
+```text
+TASK_ID: M2-001b | BASE_COMMIT_SHA: 8da2226 (merged main 2de56c5) | BRANCH/PR: m2-web-shell (local only, not pushed)
+MODEL/EFFORT/ULTRACODE VERIFIED: claude-sonnet-5-5 / NOT TESTED / NOT TESTED | OWNER: Sonnet | REVIEWER: Opus (ADR-0006, Dockerfile, CI/Compose)
+FILES_CHANGED: apps/web/** (package.json, tsconfig, next.config.ts, eslint/vitest/playwright/postcss configs, src/app/{layout,page,not-found,error,tokens.css,globals.css}, src/app/app/{layout,page}.tsx, src/lib/time/nanos(+test).ts, src/lib/api/{client.ts,generated/schema.d.ts}, e2e/smoke.spec.ts, Dockerfile), pnpm-lock.yaml (created by pnpm install), docs/adr/0006-typescript-version.md
+ENV: local Node v24.11.1 (NOT 26), pnpm 9.15.9; next 16.4.6, react 19.3.1, tailwind 4.3.5, TypeScript 6.0.3 (7.0.2 failed in openapi-typescript, ADR-0006), vitest 5.1.1, playwright 1.65.1
+RESULTS (measured):
+ gen:api PASS | typecheck PASS | lint PASS, 0 errors, 0 warnings (2 import/no-anonymous-default-export warnings fixed) | test PASS 4/4 | build PASS: route table `○ /`, `○ /_not-found`, `ƒ /app` (/app made dynamic via `export const dynamic = "force-dynamic"` in src/app/app/layout.tsx; was static before)
+ Header: `next start` + `curl -sI http://127.0.0.1:3000/app` → `HTTP/1.1 200 OK`, `Cache-Control: private, no-store`; `/` → `Cache-Control: s-maxage=31536000` (static, intended)
+ schema.d.ts: tracked by git (`git ls-files` lists it; `git check-ignore` empty)
+ Playwright: chromium installed; `CI=1 pnpm test:e2e` → 2 passed (home→/app link; /app cache-control). Note: webServer uses `next start`, which Next warns is unsupported with `output: standalone`; works, switch to `node .next/standalone/server.js` later
+ Docker: BLOCKED. Build context fixed (571.4 kB after root .dockerignore, was ~640 MB); Docker daemon stalls pulling `node:26-alpine` (and `node:24-alpine`) at "Pulling fs layer" while Docker Hub endpoints answer normally. Build not completed; owner decided to skip for now. Container header and non-root checks NOT TESTED. Dockerfile also uses tag-pinned (not digest-pinned) bases.
+NOT TESTED: Docker build/run, container header + non-root, Node 26, axe, TS 7 with ESLint/Next
+CI/COMPOSE REQUEST FOR OPUS: CI job `web`: setup-node 26, `pnpm install --frozen-lockfile`, `pnpm -C apps/web gen:api && git diff --exit-code apps/web/src/lib/api/generated`, lint, typecheck, test, build (e2e optional: `pnpm exec playwright install --with-deps chromium`). Compose service `web`: build context repo root, `dockerfile: apps/web/Dockerfile`, port 3000, env TRACE_API_URL + service token (not yet read by code), depends_on trace-api.
+FINAL: PASS for gen:api/typecheck/lint/test/build/Playwright smoke (local Node 24); BLOCKED for Docker
+```

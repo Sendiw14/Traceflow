@@ -1,0 +1,38 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+@theme inline {
+  --color-paper: var(--tf-paper);
+  --color-canvas: var(--tf-canvas);
+  --color-sunken: var(--tf-sunken);
+  --color-ink: var(--tf-ink);
+  --color-ink-2: var(--tf-ink-2);
+  --color-ink-3: var(--tf-ink-3);
+  --color-signal: var(--tf-signal);
+  --color-signal-strong: var(--tf-signal-strong);
+  --color-signal-tint: var(--tf-signal-tint);
+  --color-error: var(--tf-error);
+  --color-line: var(--tf-border);
+  --color-control: var(--tf-control-border);
+  --font-sans: var(--tf-font-ui);
+  --font-serif: var(--tf-font-display);
+  --font-mono: var(--tf-font-mono);
+}
+
+html { background: var(--tf-canvas); color: var(--tf-ink); font-family: var(--tf-font-ui); }
+body { margin: 0; font-size: 16px; line-height: 24px; }
+a { color: var(--tf-signal-strong); }
+
+/* Focus is always visible and never hover-dependent (WCAG 2.4.7/2.4.13). */
+:focus-visible {
+  outline: 2px solid var(--tf-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--tf-paper);
+}
+
+.skip-link {
+  position: absolute; left: var(--tf-space-4); top: -100px; z-index: 60;
+  background: var(--tf-ink); color: var(--tf-paper); padding: var(--tf-space-2) var(--tf-space-4);
+  border-radius: var(--tf-radius-md);
+}
+.skip-link:focus { top: var(--tf-space-4); }
