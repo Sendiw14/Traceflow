@@ -19,6 +19,6 @@
 | M2-001c Add web to CI | Opus | DONE (actionlint; CI run NOT TESTED) | |
 | M2-001d Add web to Compose + Docker build | Opus | BLOCKED | Docker daemon pull stall; retry after Docker Desktop restart |
 | M5-NOTE `import "server-only"` in `src/lib/api/client.ts`; route-aware `aria-current` | Sonnet | TODO | from Opus review of M2-001b |
-| M2-002 Auth spike (better-auth) for ADR-0005 | Opus | TODO | |
+| M2-002 Auth spike (better-auth) for ADR-0005 | Opus | DONE — PASS 24/24 (mocked GitHub) | docs/testing/auth-spike.md |
 | M2-003 Verify Collector v0.165.0 `sending_queue.batch` | Opus | DONE (config schema PASS; export NOT TESTED until M3) | exporter name `otlp_http` |
 | SEC-REVIEW Independent read-only review of docs/security | independent reviewer + owner | TODO | |

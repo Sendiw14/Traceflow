@@ -1,6 +1,6 @@
 # ADR-0005: Operator authentication and BFF→API service auth
 
-- **Status:** Accepted by owner 2026-11-22, conditional on M2 spike (state/PKCE, redirect validation, session rotation, logout). Spike failure reopens this ADR.
+- **Status:** Accepted — owner approved 2026-11-22; M2 spike PASS 24/24 (`docs/testing/auth-spike.md`) with the required configuration below.
 - **Date:** 2026-11-22
 - **Requirements:** SCOPE-07, AC-AUTH-01, AC-AUTH-02
 
@@ -13,6 +13,12 @@
 6. **local-dev bootstrap:** fixed local operator session without OAuth, enabled only when `TRACEFLOW_PROFILE=local-dev` and bound to loopback; startup fails otherwise.
 7. **public-demo:** no auth subsystem; only `/demo/*` data routes enabled; BFF holds a demo-only service token for a read-only API instance.
 
+## Spike-derived requirements (binding for implementation)
+- Cookie names `__Host-tf_session`, `__Host-tf_session_data`, `__Host-tf_state` with `useSecureCookies: false` and `defaultCookieAttributes { secure: true, httpOnly: true, sameSite: "lax", path: "/" }`; M6 test asserts `Secure`, `Path=/`, no `Domain`.
+- Lifetime: `expiresIn` 12 h, `updateAge` 1 h, plus server-side rejection of sessions older than 7 d (`createdAt`).
+- Allowlist enforced in `databaseHooks.account.create.before` on `accountId` (numeric GitHub ID); also enforced on any account-link path.
+- Denied login redirects to the `/login` denied state, never raw JSON.
+
 ## Open
-- Library confirmed only after M2 spike passes (owner approved approach 2026-11-22).
+- Library confirmed: better-auth 1.7.27 (spike PASS). Real GitHub OAuth NOT TESTED until an OAuth app exists (pre-M8).
 - Whether auth schema lives in same PG instance (proposed: yes, separate schema + role) — owner review.

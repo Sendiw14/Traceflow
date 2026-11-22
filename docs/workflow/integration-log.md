@@ -151,3 +151,18 @@ KNOWN FAILURES / UNTESTED: Docker image build BLOCKED (daemon stalls pulling nod
 DEPENDENCIES / NEXT HANDOFF: M2-001d (Docker, after daemon restart), M2-002 auth spike, M2 gate review
 FINAL: PASS (merge + CI config) / BLOCKED (Docker)
 ```
+
+## M2-002 — better-auth spike
+
+```text
+TASK_ID: M2-002 | BASE_COMMIT_SHA: 6cc1627 | BRANCH/PR: main (local only, not pushed)
+MODEL/EFFORT/ULTRACODE VERIFIED: claude-opus-5-5 / NOT TESTED / NOT TESTED
+OWNER: Opus | REVIEWER: owner (ADR-0005 high-risk; approved approach before spike)
+REQUIREMENT_IDS: SCOPE-07, AC-AUTH-01, AC-AUTH-02, T-02..T-05 (threat model)
+FILES_CHANGED: docs/testing/auth-spike.md, docs/testing/spikes/auth-better-auth/{spike.mjs,package.json,package-lock.json,.gitignore}, docs/adr/0005, docs/architecture/compatibility-matrix.md, docs/workflow/{task-board,integration-log}.md
+COMMANDS RUN + ACTUAL RESULTS: npm install better-auth@1.7.27 pg@8 (16 min, slow registry); node spike.mjs → 23/24 with defaults (cookie prefix __Secure-); custom names with useSecureCookies:true → invalid "__Secure-__Host-…"; useSecureCookies:false + secure attributes + __Host- names → 24/24; committed copy re-run → 24/24; gitleaks on spike dir → no findings
+SECURITY / DATA IMPACT: none deployed; test IDs only, mocked GitHub, throwaway DB removed
+KNOWN FAILURES / UNTESTED: real GitHub OAuth; absolute 7 d session cap; denied-login UX; rate limits; Next.js integration; Node 26
+DEPENDENCIES / NEXT HANDOFF: M2 gate review; auth implementation at M5/M6 must apply ADR-0005 spike-derived requirements
+FINAL: PASS (spike, mocked GitHub)
+```

@@ -20,7 +20,7 @@
 | Node.js | 26 (`.nvmrc`, CI `setup-node`); local is 24.11.1 (R-11) | local + spec | MIT | CI only; NOT TESTED locally | Opus |
 | pnpm | 9.15.9 via root `packageManager` | local | MIT | **PASS (M2)**: `install --frozen-lockfile` on fresh worktree | Opus |
 | Tailwind | 4.3.5 | spec §3 | MIT | **PASS (M2)**: build with token CSS variables | Sonnet |
-| Auth library | better-auth v1.7.27 (proposed, ADR-0005) | GitHub releases | MIT | OAuth state/CSRF, session tests | Opus |
+| Auth library | better-auth 1.7.27 (ADR-0005) | GitHub releases | MIT | **PASS (M2 spike, 24/24, mocked GitHub)**: state, PKCE S256, redirect validation, `__Host-` cookies (needs config), logout, cross-origin rejection | Opus |
 | ECharts / React Flow | latest at install | npm | Apache-2.0 / MIT | bundle size, a11y | Sonnet |
 | Playwright, Vitest, axe-core | 1.65.1 / 5.1.1 / not yet installed | npm | Apache-2.0 / MIT / MPL-2.0 | Vitest PASS 4/4; Playwright 2/2 (Sonnet-reported); axe NOT TESTED | Sonnet |
 | Caddy | 2.x latest at install | docs | Apache-2.0 | TLS in prod profile | Opus |
