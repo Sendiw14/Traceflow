@@ -1,0 +1,14 @@
+# Repo-root build context (apps/web/Dockerfile). Keep it small and secret-free.
+.git
+.github
+.claude
+.env
+.env.*
+!.env.example
+**/node_modules
+**/.next
+**/coverage
+**/playwright-report
+**/test-results
+services/trace-api/bin
+docs
