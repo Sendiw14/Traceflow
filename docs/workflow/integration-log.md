@@ -132,3 +132,22 @@ NOT TESTED: Docker build/run, container header + non-root, Node 26, axe, TS 7 wi
 CI/COMPOSE REQUEST FOR OPUS: CI job `web`: setup-node 26, `pnpm install --frozen-lockfile`, `pnpm -C apps/web gen:api && git diff --exit-code apps/web/src/lib/api/generated`, lint, typecheck, test, build (e2e optional: `pnpm exec playwright install --with-deps chromium`). Compose service `web`: build context repo root, `dockerfile: apps/web/Dockerfile`, port 3000, env TRACE_API_URL + service token (not yet read by code), depends_on trace-api.
 FINAL: PASS for gen:api/typecheck/lint/test/build/Playwright smoke (local Node 24); BLOCKED for Docker
 ```
+
+## M2-001b review + M2-001c — web merged, CI web job
+
+```text
+TASK_ID: M2-001b (review/merge), M2-001c | BASE_COMMIT_SHA: 441666e | BRANCH/PR: main (local only, not pushed)
+MODEL/EFFORT/ULTRACODE VERIFIED: claude-opus-5-5 / NOT TESTED / NOT TESTED
+OWNER: Opus (review, CI) | REVIEWER: owner approved merge + ADR-0006 in chat
+REQUIREMENT_IDS: SCOPE-09 (shell), AC-API-01 (generated client), AC-API-03 (no-store)
+FILES_CHANGED: .github/workflows/ci.yml (web job), docs/adr/0006 (Accepted), docs/architecture/compatibility-matrix.md, docs/workflow/{task-board,integration-log}.md
+COMMANDS RUN + ACTUAL RESULTS (Opus, fresh detached worktree of m2-web-shell, Node 24.11.1):
+  pnpm install --frozen-lockfile → ok; gen:api, typecheck, lint, test, build → PASS; generated client diff → none
+  next build routes: / static, /_not-found static, /app dynamic
+  next start: /app → 200 Cache-Control: private, no-store; / → 200 s-maxage=31536000 (public, revisit when demo data lands); /nope → 404
+  actionlint → clean
+REVIEW NOTES (non-blocking, queued M5-NOTE): add `import "server-only"` to src/lib/api/client.ts; nav aria-current must become route-aware
+KNOWN FAILURES / UNTESTED: Docker image build BLOCKED (daemon stalls pulling node:*-alpine); web Compose service not added; Playwright not in CI; Node 26 NOT TESTED; GitHub Actions run NOT TESTED
+DEPENDENCIES / NEXT HANDOFF: M2-001d (Docker, after daemon restart), M2-002 auth spike, M2 gate review
+FINAL: PASS (merge + CI config) / BLOCKED (Docker)
+```

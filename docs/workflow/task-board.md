@@ -15,8 +15,10 @@
 | M1-R1 Sonnet consumer review of OpenAPI | Sonnet | DONE (APPROVED) | answers questions in `api-contract.md` |
 | M1-FREEZE Contract freeze v1.0.0 sign-off | Opus + Sonnet + owner | DONE 2026-11-22 | see contract-freeze.md |
 | M2-001a Root workspace, Go skeleton, Compose, CI | Opus | DONE (local evidence; CI NOT TESTED) | |
-| M2-001b `apps/web` shell: Next.js, tokens, lint/typecheck/test, generated client | Sonnet | TODO | |
-| M2-001c Add web to Compose + CI | Opus | TODO | after M2-001b |
+| M2-001b `apps/web` shell: Next.js, tokens, lint/typecheck/test, generated client | Sonnet | DONE (merged 441666e; Docker BLOCKED) | ADR-0006 accepted |
+| M2-001c Add web to CI | Opus | DONE (actionlint; CI run NOT TESTED) | |
+| M2-001d Add web to Compose + Docker build | Opus | BLOCKED | Docker daemon pull stall; retry after Docker Desktop restart |
+| M5-NOTE `import "server-only"` in `src/lib/api/client.ts`; route-aware `aria-current` | Sonnet | TODO | from Opus review of M2-001b |
 | M2-002 Auth spike (better-auth) for ADR-0005 | Opus | TODO | |
 | M2-003 Verify Collector v0.165.0 `sending_queue.batch` | Opus | DONE (config schema PASS; export NOT TESTED until M3) | exporter name `otlp_http` |
 | SEC-REVIEW Independent read-only review of docs/security | independent reviewer + owner | TODO | |

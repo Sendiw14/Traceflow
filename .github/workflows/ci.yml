@@ -42,6 +42,25 @@ jobs:
       - name: Collector config validate
         run: docker run --rm -v "$PWD/infra/otel/collector.yaml:/c.yaml:ro" otel/opentelemetry-collector-contrib:0.165.0@sha256:e40d61f10c9a617cca1ffd1be4d7e2b3a4b0f0001798ff07e58cabe82e618cea validate --config=/c.yaml
 
+  web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1 (reads packageManager)
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Generated API client matches api/openapi.yaml
+        run: |
+          pnpm -C apps/web gen:api
+          git diff --exit-code apps/web/src/lib/api/generated
+      - run: pnpm -C apps/web lint
+      - run: pnpm -C apps/web typecheck
+      - run: pnpm -C apps/web test
+      - run: pnpm -C apps/web build
+
   secrets:
     runs-on: ubuntu-24.04
     steps:

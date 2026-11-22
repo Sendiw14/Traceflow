@@ -13,20 +13,21 @@
 | sqlc | v1.31.1 | GitHub releases | MIT | generate against PG 18 schema; fallback hand-written pgx queries | Opus |
 | goose (migrations) | v3.30.1 | GitHub releases | MIT | forward migrations in CI | Opus |
 | oapi-codegen | v2.9.0 (2026-11-21, very new — consider prior patch) | GitHub releases | Apache-2.0 | Go server types from `api/openapi.yaml` | Opus |
-| openapi-typescript + openapi-fetch | latest 7.x/0.x at install | npm | MIT | TS client generation, `tsc` | Sonnet |
-| Next.js | 16.4.6 (2026-11-09) | GitHub releases | MIT | build, lint, typecheck; `no-store` headers on private routes | Sonnet |
-| React | 19.3.x per Next peer range | spec §3 | MIT | build | Sonnet |
-| TypeScript | 7.0 if toolchain passes, else 6.x (ADR) | spec §3 | Apache-2.0 | Next + ESLint + generator + editor | Sonnet |
+| openapi-typescript + openapi-fetch | 7.13.0 / 0.17.0 | npm | MIT | **PASS (M2)**: `gen:api`, no diff vs committed client | Sonnet |
+| Next.js | 16.4.6 | GitHub releases | MIT | **PASS (M2)**: build, lint, typecheck; `/app` dynamic, `Cache-Control: private, no-store` via `next start` | Sonnet |
+| React | 19.3.1 | spec §3 | MIT | **PASS (M2)**: build | Sonnet |
+| TypeScript | **6.0.3** (ADR-0006: 7.0.2 breaks openapi-typescript) | spec §3 | Apache-2.0 | **PASS (M2)**: typecheck | Sonnet |
 | Node.js | 26 (`.nvmrc`, CI `setup-node`); local is 24.11.1 (R-11) | local + spec | MIT | CI only; NOT TESTED locally | Opus |
-| pnpm | 9.15.9 via root `packageManager` | local | MIT | lockfile created with apps/web | Opus |
-| Tailwind | 4.3.x | spec §3 | MIT | CSS-first config | Sonnet |
+| pnpm | 9.15.9 via root `packageManager` | local | MIT | **PASS (M2)**: `install --frozen-lockfile` on fresh worktree | Opus |
+| Tailwind | 4.3.5 | spec §3 | MIT | **PASS (M2)**: build with token CSS variables | Sonnet |
 | Auth library | better-auth v1.7.27 (proposed, ADR-0005) | GitHub releases | MIT | OAuth state/CSRF, session tests | Opus |
 | ECharts / React Flow | latest at install | npm | Apache-2.0 / MIT | bundle size, a11y | Sonnet |
-| Playwright, Vitest, axe-core | latest at install | npm | Apache-2.0 / MIT / MPL-2.0 | CI | Sonnet |
+| Playwright, Vitest, axe-core | 1.65.1 / 5.1.1 / not yet installed | npm | Apache-2.0 / MIT / MPL-2.0 | Vitest PASS 4/4; Playwright 2/2 (Sonnet-reported); axe NOT TESTED | Sonnet |
 | Caddy | 2.x latest at install | docs | Apache-2.0 | TLS in prod profile | Opus |
 | distroless static | `gcr.io/distroless/static-debian12:nonroot` @sha256:afa5c872… | — | Apache-2.0 | trace-api runtime image, non-root | Opus |
 | gitleaks | v8.30.1 `@sha256:c00b6bd0…` | GitHub releases | MIT | **PASS (M2)**: history scan, no leaks | Opus |
 | actionlint | 1.7.12 | GitHub releases | MIT | **PASS (M2)** on `ci.yml` | Opus |
-| GitHub Actions | checkout v7.0.1, setup-go v7.1.0, setup-node v7.1.0 — pinned by commit SHA | GitHub API | MIT | CI NOT TESTED (repo not pushed) | Opus |
+| node base image | `node:26-alpine` (tag only; digest pin pending) | Docker Hub | MIT | Docker build **BLOCKED** (daemon stalls on pull) | Sonnet |
+| GitHub Actions | checkout v7.0.1, setup-go v7.1.0, setup-node v7.1.0, pnpm/action-setup v6.1.1 — pinned by commit SHA | GitHub API | MIT | CI NOT TESTED (repo not pushed) | Opus |
 
 Last security check: secret scan PASS 2026-11-22 (gitleaks). Dependency/image vulnerability scan NOT TESTED (add at M2 close or M6).
