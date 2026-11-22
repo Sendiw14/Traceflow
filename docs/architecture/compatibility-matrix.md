@@ -17,7 +17,7 @@
 | Next.js | 16.4.6 | GitHub releases | MIT | **PASS (M2)**: build, lint, typecheck; `/app` dynamic, `Cache-Control: private, no-store` via `next start` | Sonnet |
 | React | 19.3.1 | spec §3 | MIT | **PASS (M2)**: build | Sonnet |
 | TypeScript | **6.0.3** (ADR-0006: 7.0.2 breaks openapi-typescript) | spec §3 | Apache-2.0 | **PASS (M2)**: typecheck | Sonnet |
-| Node.js | 26 (`.nvmrc`, CI `setup-node`); local is 24.11.1 (R-11) | local + spec | MIT | CI only; NOT TESTED locally | Opus |
+| Node.js | 26.13.1 in CI (`.nvmrc` 26); local 24.11.1 (R-11) | CI log | MIT | **PASS (CI run 45017824146)**: web install, gen:api, lint, typecheck, test, build | Opus |
 | pnpm | 9.15.9 via root `packageManager` | local | MIT | **PASS (M2)**: `install --frozen-lockfile` on fresh worktree | Opus |
 | Tailwind | 4.3.5 | spec §3 | MIT | **PASS (M2)**: build with token CSS variables | Sonnet |
 | Auth library | better-auth 1.7.27 (ADR-0005) | GitHub releases | MIT | **PASS (M2 spike, 24/24, mocked GitHub)**: state, PKCE S256, redirect validation, `__Host-` cookies (needs config), logout, cross-origin rejection | Opus |
@@ -28,6 +28,6 @@
 | gitleaks | v8.30.1 `@sha256:c00b6bd0…` | GitHub releases | MIT | **PASS (M2)**: history scan, no leaks | Opus |
 | actionlint | 1.7.12 | GitHub releases | MIT | **PASS (M2)** on `ci.yml` | Opus |
 | node base image | `node:26-alpine` (tag only; digest pin pending) | Docker Hub | MIT | Docker build **BLOCKED** (daemon stalls on pull) | Sonnet |
-| GitHub Actions | checkout v7.0.1, setup-go v7.1.0, setup-node v7.1.0, pnpm/action-setup v6.1.1 — pinned by commit SHA | GitHub API | MIT | CI NOT TESTED (repo not pushed) | Opus |
+| GitHub Actions | checkout v7.0.1, setup-go v7.1.0, setup-node v7.1.0, pnpm/action-setup v6.1.1 — pinned by commit SHA | GitHub API | MIT | **PASS**: run 45017824146 on 8b8bb74, all 5 jobs green | Opus |
 
 Last security check: secret scan PASS 2026-11-22 (gitleaks). Dependency/image vulnerability scan NOT TESTED (add at M2 close or M6).

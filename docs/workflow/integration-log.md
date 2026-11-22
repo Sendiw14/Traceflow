@@ -166,3 +166,13 @@ KNOWN FAILURES / UNTESTED: real GitHub OAuth; absolute 7 d session cap; denied-l
 DEPENDENCIES / NEXT HANDOFF: M2 gate review; auth implementation at M5/M6 must apply ADR-0005 spike-derived requirements
 FINAL: PASS (spike, mocked GitHub)
 ```
+
+## M2 — first CI run
+
+```text
+TASK_ID: M2 CI | BASE_COMMIT_SHA: 8b8bb74 (main, pushed; history author emails rewritten to GitHub noreply before first push)
+RUN: https://github.com/Sendiw14/Traceflow/actions/runs/45017824146
+RESULTS: go success | contracts success | secrets success | web success (Node 26.13.1) | compose-smoke success
+NOTES: compose-smoke proves trace-api image build + probes on a GitHub runner; web Docker image still not built anywhere (no CI job; local daemon pull stall)
+FINAL: PASS
+```
