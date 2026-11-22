@@ -3,7 +3,7 @@
 # Base images are tag-pinned only; digest pinning is NOT DONE (NOT TESTED: Docker build not run, see handoff).
 FROM node:26-alpine AS base
 ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH NEXT_TELEMETRY_DISABLED=1
-RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+RUN npm install -g pnpm@9.15.9
 
 FROM base AS deps
 WORKDIR /repo

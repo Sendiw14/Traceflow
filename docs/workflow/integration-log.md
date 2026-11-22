@@ -176,3 +176,5 @@ RESULTS: go success | contracts success | secrets success | web success (Node 26
 NOTES: compose-smoke proves trace-api image build + probes on a GitHub runner; web Docker image still not built anywhere (no CI job; local daemon pull stall)
 FINAL: PASS
 ```
+
+M2-001b follow-up (2026-11-22): apps/web/Dockerfile replaced `corepack enable && corepack prepare` with `npm install -g pnpm@9.15.9` (Node 25+ images lack corepack, CI exit 127). Docker build NOT TESTED locally; CI compose-smoke is the check.
