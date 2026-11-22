@@ -27,7 +27,7 @@
 | distroless static | `gcr.io/distroless/static-debian12:nonroot` @sha256:afa5c872… | — | Apache-2.0 | trace-api runtime image, non-root | Opus |
 | gitleaks | v8.30.1 `@sha256:c00b6bd0…` | GitHub releases | MIT | **PASS (M2)**: history scan, no leaks | Opus |
 | actionlint | 1.7.12 | GitHub releases | MIT | **PASS (M2)** on `ci.yml` | Opus |
-| node base image | `node:26-alpine` (tag only; digest pin pending) | Docker Hub | MIT | Docker build **BLOCKED** (daemon stalls on pull) | Sonnet |
+| node base image | `node:26-alpine` (tag only; digest pin pending) | Docker Hub | MIT | **PASS (CI run 45026370632)**: web image builds; pnpm via `npm i -g` (Node 25+ has no corepack). Local build still BLOCKED | Sonnet |
 | GitHub Actions | checkout v7.0.1, setup-go v7.1.0, setup-node v7.1.0, pnpm/action-setup v6.1.1 — pinned by commit SHA | GitHub API | MIT | **PASS**: run 45017824146 on 8b8bb74, all 5 jobs green | Opus |
 
 Last security check: secret scan PASS 2026-11-22 (gitleaks). Dependency/image vulnerability scan NOT TESTED (add at M2 close or M6).

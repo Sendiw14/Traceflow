@@ -180,3 +180,32 @@ FINAL: PASS
 M2-001b follow-up (2026-11-22): apps/web/Dockerfile replaced `corepack enable && corepack prepare` with `npm install -g pnpm@9.15.9` (Node 25+ images lack corepack, CI exit 127). Docker build NOT TESTED locally; CI compose-smoke is the check.
 
 M2-001b follow-up 2 (2026-11-22): removed `COPY ... apps/web/public` from apps/web/Dockerfile; dir not in git (no static assets yet). Re-add the COPY when a real asset lands. Docker build NOT TESTED locally; CI compose-smoke is the check.
+
+## M2-GATE — Foundation exit evidence
+
+```text
+TASK_ID: M2-GATE | HEAD: 796a4e2 (main, pushed) | CI: https://github.com/Sendiw14/Traceflow/actions/runs/45026370632 → all 5 jobs success
+MODEL/EFFORT/ULTRACODE VERIFIED: claude-opus-5-5 / NOT TESTED / NOT TESTED (Sonnet session same)
+GATE CRITERIA (spec §15 M2: "Fresh-clone bootstrap, lint/build/test succeed"):
+  go: gofmt, vet, test -race, build → PASS
+  contracts: OpenAPI 1.0.0 lint, Collector 0.165.0 config validate → PASS
+  web (Node 26.13.1): frozen install, generated-client drift check, lint, typecheck, Vitest 4/4, build, Playwright 2/2 → PASS
+  secrets: gitleaks full history → PASS
+  compose-smoke (fresh checkout on runner = fresh-clone bootstrap via `make env && make up`):
+    trace-api livez/readyz 200, no token 401, token 404 → PASS
+    only published port = web 127.0.0.1:3000 → PASS
+    web /app → 200, Cache-Control: private, no-store → PASS
+    web container uid = 10001 (non-root) → PASS
+    web cannot connect to postgres:5432 → PASS
+  auth spike (M2-002): 24/24 with mocked GitHub → PASS
+FIX HISTORY THIS GATE: web Dockerfile corepack missing on Node 26 (cc669ff); COPY of nonexistent apps/web/public (796a4e2)
+KNOWN FAILURES / UNTESTED:
+  local Docker Desktop cannot pull node:*-alpine (works on CI) — BLOCKED locally
+  node base image not digest-pinned (Sonnet, before M8)
+  no image vulnerability scan; no SBOM (M6)
+  effort/Ultracode unverified for both sessions
+  docs/security not independently reviewed (SEC-REVIEW)
+  capacity profile still assumed (M3/M4)
+READINESS: (B) code foundation ready — pending owner gate approval. No ingest/query functionality yet.
+FINAL: PASS (M2 gate criteria) — awaiting owner sign-off
+```

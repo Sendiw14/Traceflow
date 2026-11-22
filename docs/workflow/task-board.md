@@ -17,9 +17,9 @@
 | M2-001a Root workspace, Go skeleton, Compose, CI | Opus | DONE (CI run 45017824146 green) | |
 | M2-001b `apps/web` shell: Next.js, tokens, lint/typecheck/test, generated client | Sonnet | DONE (merged 441666e; Docker BLOCKED) | ADR-0006 accepted |
 | M2-001c Add web to CI | Opus | DONE (CI web job green on Node 26.13.1) | |
-| M2-001d Add web to Compose + Docker build | Opus | BLOCKED | Docker daemon pull stall; retry after Docker Desktop restart |
+| M2-001d Add web to Compose + Docker build | Opus + Sonnet (Dockerfile) | DONE (CI run 45026370632) | built on GitHub runner; local Docker still stalls |
 | M5-NOTE `import "server-only"` in `src/lib/api/client.ts`; route-aware `aria-current` | Sonnet | TODO | from Opus review of M2-001b |
 | M2-002 Auth spike (better-auth) for ADR-0005 | Opus | DONE — PASS 24/24 (mocked GitHub) | docs/testing/auth-spike.md |
 | M2-003 Verify Collector v0.165.0 `sending_queue.batch` | Opus | DONE (config schema PASS; export NOT TESTED until M3) | exporter name `otlp_http` |
 | SEC-REVIEW Independent read-only review of docs/security | independent reviewer + owner | TODO | |
-| M2-GATE M2 exit review | Opus + owner | PENDING | open: web Docker image/Compose (BLOCKED locally), Playwright not in CI |
+| M2-GATE M2 exit review | Opus + owner | READY FOR OWNER | see integration-log M2-GATE |
