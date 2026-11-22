@@ -26,5 +26,6 @@
 | M3-001 Migration, OTLP receiver, normalize/redact, store (dedupe, conflicts, summaries, limits) | Opus | DONE (local evidence) | fixtures OTLP-01..17 |
 | M3-002 Demo system (gateway→orders→inventory, 5 scenarios) + Collector interop | Opus | DONE (local, host-built binaries) | OTLP-18, DATA-01/05-08 |
 | M3-003 Retention job | Opus | DONE | |
-| M3-004 CI: Postgres integration + interop smoke | Opus | PENDING CI RUN | |
+| M3-004 CI: Postgres integration + interop smoke | Opus | DONE (CI run 45035824037 green) | real Dockerfiles built on runner |
+| M3-GATE M3 exit review | Opus + owner | READY FOR OWNER | see integration-log M3 |
 | M3-OPEN OTLP-19 direct SDK retry-on-503 test; persistent Collector queue eval; failure drills (PG/Collector restart) | Opus | TODO | M6 at latest |

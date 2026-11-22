@@ -227,3 +227,5 @@ COMMANDS RUN + ACTUAL RESULTS (local, PostgreSQL 18.7 container):
 KNOWN FAILURES / UNTESTED: local Docker builds cannot fetch Go modules (TLS/stream errors) → real Dockerfile builds only in CI; OTLP-19 (direct SDK retry on 503) NOT TESTED; Collector restart/overflow drills NOT TESTED; persistent queue not configured; migrations run with runtime role (shortcut until M6); no load test yet (M4)
 FINAL: PASS (local) — CI run pending
 ```
+
+M3 CI: run 45018982725→45035442575 failed only in compose-smoke (load build output counted as result lines; test-script bug, fixed 05776f7). Run https://github.com/Sendiw14/Traceflow/actions/runs/45035824037 on 05776f7 → go (incl. 12 PostgreSQL integration tests, -race), contracts, web, secrets, compose-smoke (demo SDK → Collector → trace-api → PostgreSQL; 5 scenario shapes + slow ≥ 800 ms + collector-sourced 200 records) all success. FINAL: PASS (M3 gate criteria; OTLP-19 and failure drills still NOT TESTED).
