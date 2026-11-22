@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+// Private segment: never prerender or share-cache (spec §7, §11).
+export const dynamic = "force-dynamic";
+
 // Shell only: no data, no auth (auth lands with ADR-0005 spike). Nav lists routes that exist.
 const NAV = [{ href: "/app", label: "Overview" }] as const;
 
