@@ -126,7 +126,10 @@ jobs:
       - name: Demo SDK → Collector → trace-api → PostgreSQL (OTLP-18, DATA-01/05-08)
         run: |
           set -a; . ./.env; set +a
-          docker compose run --rm load | tee load.out
+          docker compose --profile tools build load
+          docker compose run --rm load > load.raw
+          # keep only result lines; build/progress output must not count
+          grep -E '^(normal|slow|error|parallel|missing-parent) [0-9a-f]{32} [0-9]{3}$' load.raw | tee load.out
           test "$(wc -l < load.out)" -eq 5
           for _ in $(seq 1 30); do
             n=$(docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "select count(*) from trace_summaries")
