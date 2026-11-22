@@ -29,6 +29,7 @@
 | M3-004 CI: Postgres integration + interop smoke | Opus | DONE (CI run 45035824037 green) | real Dockerfiles built on runner |
 | M3-GATE M3 exit review | Opus + owner | APPROVED by owner 2026-11-22 | |
 | M3-OPEN OTLP-19 direct SDK retry-on-503 test; persistent Collector queue eval; failure drills (PG/Collector restart) | Opus | TODO | M6 at latest |
-| M4-001 Query API (all 1.0.0 operations), generated Go models, contract + oracle tests | Opus | DONE (local) | CI pending |
+| M4-001 Query API (all 1.0.0 operations), generated Go models, contract + oracle tests | Opus | DONE (CI run 45039390875 green) | |
+| M4-GATE M4 exit review | Opus + owner | READY FOR OWNER | see integration-log M4 |
 | M4-002 Benchmark PERF-01/02 on dev host | Opus | DONE — targets met on dev host; reference Linux host NOT TESTED | benchmark-results.md |
 | M4-OPEN reference-host benchmark; 7-day window aggregates; dependencies query optimisation if needed; Sonnet: switch UI fixtures to real API (M5) | Opus/Sonnet | TODO | |

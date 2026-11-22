@@ -250,3 +250,5 @@ COMMANDS RUN + ACTUAL RESULTS (local, PostgreSQL 18.7):
 KNOWN FAILURES / UNTESTED: reference Linux host benchmark; 7-day windows; aggregate endpoints under concurrent load; UI integration (M5)
 FINAL: PASS (local) — CI pending
 ```
+
+M4 CI: run 45039003998 failed only in compose-smoke (probe still expected M2-era 404 for /v1/overview; fixed 840697b). Run https://github.com/Sendiw14/Traceflow/actions/runs/45039390875 on 840697b → go (incl. codegen drift check, PostgreSQL integration, OpenAPI contract + oracle tests, -race), contracts, web, secrets, compose-smoke all success. FINAL: PASS (M4 gate criteria on dev host; reference-host benchmark NOT TESTED).
