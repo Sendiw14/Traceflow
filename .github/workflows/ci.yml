@@ -60,6 +60,10 @@ jobs:
       - run: pnpm -C apps/web typecheck
       - run: pnpm -C apps/web test
       - run: pnpm -C apps/web build
+      - name: Playwright smoke
+        run: |
+          pnpm -C apps/web exec playwright install --with-deps chromium
+          pnpm -C apps/web test:e2e
 
   secrets:
     runs-on: ubuntu-24.04
@@ -72,7 +76,7 @@ jobs:
 
   compose-smoke:
     runs-on: ubuntu-24.04
-    needs: [go, contracts]
+    needs: [go, contracts, web]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: make env
@@ -85,7 +89,21 @@ jobs:
           test "$(c http://trace-api:8080/readyz)" = 200
           test "$(c http://trace-api:8080/v1/overview)" = 401
           test "$(c -H "Authorization: Bearer $TRACEFLOW_SERVICE_TOKEN" http://trace-api:8080/v1/overview)" = 404
-          test "$(docker compose ps --format '{{.Publishers}}' | grep -c '0.0.0.0\|127.0.0.1')" = 0
+      - name: Only web is published, and only on loopback
+        run: |
+          pubs=$(docker compose ps --format json | jq -rs 'flatten | .[] | .Service as $s | .Publishers[]? | select(.PublishedPort > 0) | "\($s) \(.URL):\(.PublishedPort)"' | sort -u)
+          echo "$pubs"
+          test "$pubs" = "web 127.0.0.1:3000"
+      - name: Web container serves private routes no-store and runs non-root
+        run: |
+          curl -sfI http://127.0.0.1:3000/ > /dev/null
+          curl -sI http://127.0.0.1:3000/app | tee /dev/stderr | grep -qi '^cache-control: private, no-store'
+          uid=$(docker compose exec -T web id -u); echo "web uid=$uid"; test "$uid" != 0
+      - name: Web cannot reach the database network
+        run: |
+          if docker compose exec -T web node -e "require('net').connect(5432,'postgres').on('connect',()=>process.exit(0)).on('error',()=>process.exit(1))"; then
+            echo "web reached postgres"; exit 1
+          fi
       - if: failure()
         run: docker compose logs --tail=200
       - if: always()

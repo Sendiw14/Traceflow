@@ -1,5 +1,5 @@
 # TRACEFLOW local-dev stack (docs/architecture/deployment-topology.md).
-# Nothing is published to the host in M2: all networks are internal.
+# Only web is published, and only on 127.0.0.1:3000. app/ingest/data networks are internal.
 # Usage: make env && make up
 name: traceflow
 
@@ -38,6 +38,26 @@ services:
     security_opt: ["no-new-privileges:true"]
     restart: unless-stopped
 
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    # M2 shell reads no env yet; trace-api URL and service token are added when the BFF lands (M5).
+    depends_on:
+      trace-api: { condition: service_healthy }
+    networks: [edge, app]
+    ports:
+      - "127.0.0.1:3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+
   collector:
     image: otel/opentelemetry-collector-contrib:0.165.0@sha256:e40d61f10c9a617cca1ffd1be4d7e2b3a4b0f0001798ff07e58cabe82e618cea
     command: ["--config=/etc/otelcol/config.yaml"]
@@ -49,6 +69,7 @@ services:
     restart: unless-stopped
 
 networks:
+  edge: {}
   app: { internal: true }
   ingest: { internal: true }
   data: { internal: true }
