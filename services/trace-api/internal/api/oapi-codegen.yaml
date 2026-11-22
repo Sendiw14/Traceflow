@@ -1,0 +1,5 @@
+# Models only; handlers are hand-written (ADR-0004). Regenerate: go generate ./internal/api
+package: api
+generate:
+  models: true
+output: gen.go

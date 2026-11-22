@@ -229,3 +229,24 @@ FINAL: PASS (local) — CI run pending
 ```
 
 M3 CI: run 45035442575 failed only in compose-smoke (load build output counted as result lines; test-script bug, fixed 05776f7). Run https://github.com/Sendiw14/Traceflow/actions/runs/45035824037 on 05776f7 → go (incl. 12 PostgreSQL integration tests, -race), contracts, web, secrets, compose-smoke (demo SDK → Collector → trace-api → PostgreSQL; 5 scenario shapes + slow ≥ 800 ms + collector-sourced 200 records) all success. FINAL: PASS (M3 gate criteria; OTLP-19 and failure drills still NOT TESTED).
+
+## M4 — Query API, analytics, topology
+
+```text
+TASK_ID: M4-001..002 | BASE_COMMIT_SHA: 224da1f | BRANCH/PR: main
+MODEL/EFFORT/ULTRACODE VERIFIED: claude-opus-5-5 / NOT TESTED / NOT TESTED
+OWNER: Opus | REVIEWER: pending (Sonnet as API consumer at M5; independent backend review)
+REQUIREMENT_IDS: SCOPE-05 (data), AC-API-01..03, AC-DATA-03, AC-PERF-01/02
+FILES_CHANGED: services/trace-api/internal/{api (generated), query, httpapi, testdb}/**, tests/perf, cmd/server, store (first_span_received_at), go.mod (oapi-codegen tool), CI (codegen drift), docs (api-contract semantics, benchmark-results, capacity-profile, matrix)
+CONTRACT_VERSION CONSUMED / CONTRACT_CHANGES: 1.0.0 / none
+COMMANDS RUN + ACTUAL RESULTS (local, PostgreSQL 18.7):
+  go test -race -count=1 ./... (twice) → all ok, incl. httpapi contract suite (9 tests)
+  contract: all 15 success calls + 8 error calls validated against api/openapi.yaml; negative control rejects 3 invalid bodies
+  oracle: request/error counts, error_fraction, p50/p95/p99 match independent nearest-rank oracle for all/gateway/orders/inventory
+  pagination 120 traces, limit 7 → no skip/dup, DESC order; cursor + changed filter → 400 cursor_filter_mismatch
+  dependencies: only gateway→orders (120 pairs) and orders→inventory (120), basis client_server, endpoints ⊂ nodes
+  benchmark (dev host, PG capped 4 CPU/8 GB): ingest 300,000/300,000 accepted at 499.97 spans/s, 0 failures; trace list p95 2.08 ms, detail p95 5.26 ms, 0 % errors over 1.05 M requests
+  bugs found by tests and fixed: constant ORDER BY in ungrouped stats (PostgreSQL 42601); test packages sharing one database
+KNOWN FAILURES / UNTESTED: reference Linux host benchmark; 7-day windows; aggregate endpoints under concurrent load; UI integration (M5)
+FINAL: PASS (local) — CI pending
+```

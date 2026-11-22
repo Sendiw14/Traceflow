@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Command server runs trace-api: OTLP/HTTP ingest listener (M3) and the query
-// listener (health probes now; query endpoints land in M4).
+// listener (api/openapi.yaml 1.0.0 behind the service token).
 package main
 
 import (
@@ -19,9 +19,11 @@ import (
 	"github.com/Sendiw14/Traceflow/services/trace-api/db"
 	"github.com/Sendiw14/Traceflow/services/trace-api/internal/authz"
 	"github.com/Sendiw14/Traceflow/services/trace-api/internal/config"
+	"github.com/Sendiw14/Traceflow/services/trace-api/internal/httpapi"
 	"github.com/Sendiw14/Traceflow/services/trace-api/internal/ingest"
 	"github.com/Sendiw14/Traceflow/services/trace-api/internal/ops"
 	"github.com/Sendiw14/Traceflow/services/trace-api/internal/problem"
+	"github.com/Sendiw14/Traceflow/services/trace-api/internal/query"
 	"github.com/Sendiw14/Traceflow/services/trace-api/internal/store"
 )
 
@@ -39,11 +41,14 @@ func main() {
 
 // newQueryHandler wires the query listener. Health probes are unauthenticated;
 // everything else requires the service token.
-func newQueryHandler(cfg config.Config, db ops.Pinger) http.Handler {
+func newQueryHandler(cfg config.Config, db ops.Pinger, routes func(*http.ServeMux)) http.Handler {
 	api := http.NewServeMux()
 	api.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
 		problem.Write(w, http.StatusNotFound, "not_found", "No such endpoint.")
 	})
+	if routes != nil {
+		routes(api)
+	}
 	mux := http.NewServeMux()
 	mux.Handle("GET /livez", ops.Liveness())
 	mux.Handle("GET /readyz", ops.Readiness(db))
@@ -97,7 +102,12 @@ func run(log *slog.Logger) error {
 		log.Info("migrations applied")
 	}
 
-	servers := []*http.Server{newServer(cfg.QueryAddr, newQueryHandler(cfg, pool))}
+	limits := query.Limits{
+		MaxRequestBytesCompressed: int(ingest.DefaultLimits.MaxCompressedBytes), MaxRequestBytesRaw: int(ingest.DefaultLimits.MaxRawBytes),
+		MaxSpansPerRequest: ingest.DefaultLimits.MaxSpansPerRequest, MaxSpansPerTrace: store.MaxSpansPerTrace, MaxQueryWindow: httpapi.MaxWindow,
+	}
+	apiSrv := httpapi.New(query.New(pool), log, string(cfg.Profile), limits)
+	servers := []*http.Server{newServer(cfg.QueryAddr, newQueryHandler(cfg, pool, apiSrv.Routes))}
 	if cfg.IngestAddr != "" {
 		mux := http.NewServeMux()
 		mux.Handle("/v1/traces", ingest.NewHandler(store.New(pool), ingest.DefaultLimits, log))

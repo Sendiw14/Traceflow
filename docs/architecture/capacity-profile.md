@@ -1,4 +1,4 @@
-# Capacity Profile (M1 — formulas + planning assumptions, NOT measured)
+# Capacity Profile (formulas + planning assumptions; first measurement recorded)
 
 **Status:** PROVISIONAL. Every number marked *assumed* must be replaced by measurement at M3/M4 (`docs/testing/benchmark-results.md`). Owner decision U-02: demo + personal projects, < 50 spans/s sustained, 7-day retention.
 
@@ -26,6 +26,8 @@ disk_required      = db_bytes + WAL_reserve + backup_local_copy + free_space_res
 | E. public-demo | synthetic seed | 1 d | ≤ 0.5 M | — | < 2 GiB |
 
 *Assumed* 1.5 KiB/span is a placeholder for spans with ~15 attributes; real value depends on instrumentation.
+
+**First measurement (M4-PERF-01, `docs/testing/benchmark-results.md`):** synthetic spans with 2 attributes cost ≈ 374 B heap and ≈ 573 B/span including indexes (index amplification ≈ 1.53). At that size scenario B (30.2 M spans) would be ≈ 16 GiB, ≈ 21 GiB with the 30 % bloat reserve; the 1.5 KiB × 1.6 planning value remains the sizing basis until spans from real instrumentation are measured.
 
 Implications:
 - Scenario B needs ~130 GiB volume (90 GiB DB + WAL + 20% free) after reserves on the operator host. If the chosen host is smaller, reduce retention or ADR for partitioning/compression.

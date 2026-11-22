@@ -31,8 +31,8 @@ func do(t *testing.T, h http.Handler, method, path, auth string) *httptest.Respo
 
 func TestQueryHandler(t *testing.T) {
 	cfg := config.Config{ServiceToken: token}
-	up := newQueryHandler(cfg, fakeDB{})
-	down := newQueryHandler(cfg, fakeDB{err: errors.New("refused")})
+	up := newQueryHandler(cfg, fakeDB{}, nil)
+	down := newQueryHandler(cfg, fakeDB{err: errors.New("refused")}, nil)
 
 	cases := []struct {
 		name        string

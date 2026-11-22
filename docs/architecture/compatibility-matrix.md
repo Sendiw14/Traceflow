@@ -12,7 +12,8 @@
 | pgx | v5.12.0 (bumped by goose) | GitHub releases | MIT | **PASS (M3)**: integration suite on PostgreSQL 18.7 | Opus |
 | sqlc | v1.31.1 | GitHub releases | MIT | generate against PG 18 schema; fallback hand-written pgx queries | Opus |
 | goose (migrations) | v3.30.1, embedded SQL | GitHub releases | MIT | **PASS (M3)**: `00001_init.sql` applied in tests and stack | Opus |
-| oapi-codegen | v2.9.0 (2026-11-21, very new — consider prior patch) | GitHub releases | Apache-2.0 | Go server types from `api/openapi.yaml` | Opus |
+| oapi-codegen | v2.9.0 via `go tool` (models only) + runtime | GitHub releases | Apache-2.0 | **PASS (M4)**: generates compiling models from the 3.1 contract; CI drift check | Opus |
+| santhosh-tekuri/jsonschema, yaml.v3 | v6.0.3, v3.0.1 (tests only) | GitHub | Apache-2.0 / MIT, Apache-2.0 | **PASS (M4)**: every response validated against openapi.yaml; negative control rejects invalid bodies | Opus |
 | openapi-typescript + openapi-fetch | 7.13.0 / 0.17.0 | npm | MIT | **PASS (M2)**: `gen:api`, no diff vs committed client | Sonnet |
 | Next.js | 16.4.6 | GitHub releases | MIT | **PASS (M2)**: build, lint, typecheck; `/app` dynamic, `Cache-Control: private, no-store` via `next start` | Sonnet |
 | React | 19.3.1 | spec §3 | MIT | **PASS (M2)**: build | Sonnet |

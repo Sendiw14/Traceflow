@@ -74,3 +74,22 @@ Sonnet verdict on 0.2.0: **APPROVED** (non-blocking notes N-1..N-8).
 | N-6 | `getSpan` 404 documented (incl. span IDs from other traces). |
 | N-7 | UI copy only ("slowest request (server span)"); no API change. |
 | N-8 | BFF requirement: in public-demo, absent endpoints return a clean 404 Problem; `/demo` never calls them. |
+
+## M4 implementation semantics (no contract change)
+
+| Field / behaviour | Rule implemented |
+| --- | --- |
+| Population | SERVER spans (kind = 2) whose **start** is in `[from, to)`. `sample_count` = `request_count` = all such spans. |
+| Percentiles | `percentile_disc` over spans with `duration_nano >= 0` (negative = clock skew, excluded); floors apply to that non-negative count. |
+| `unset_status_count` | spans with status `unset`; distinguishes unknown from `ok` (spec §5.2). |
+| Exemplars | slowest = max non-negative duration (ties by trace_id, span_id); latest error = max start among error spans. |
+| `last_observed_unix_nano` | max span start for the service (in window when `observed_in_window`, else across retained data). |
+| Edge `basis` | `client_server_parent_child` when at least one stored pair is CLIENT/PRODUCER → SERVER/CONSUMER; counts include all pairs for that (source, target). Window is applied to the **child** span start. |
+| Dependency nodes | every edge endpoint is a node; a caller whose spans start before the window is added with `observed_in_window = false` and empty stats. |
+| Trace duration | `root_span` when exactly one root with non-negative duration; otherwise observed range, `observed_range_estimate`. Used by `min_duration_nano`. |
+| Trace list order / cursor | `(min_start_unix_nano, trace_id) DESC`; cursor = base64url JSON `{s, t, f}` with filter hash; stateless. |
+| Histogram bounds | 1-2-5 series from 100 µs to 5 s, plus 10/20/50 s and 60 s, plus open bucket (20 buckets); fixed in `query.HistogramBounds`. |
+| `first_span_received_at` | written once in the ingest transaction of the first request with a newly stored span; not removed by retention. |
+| `reject_reasons` | span-level reasons only (RejectReason enum); request-level failures (bad protobuf, too many spans) appear in `requests` by HTTP status. |
+| `next_retention_run` | last run + 1 h (retention loop cadence); null before the first run and in read-only profiles. |
+| Timeouts | 10 s per request; `context.DeadlineExceeded` → 503 `query_timeout`; other DB errors → 503 `storage_unavailable` with `Retry-After`. |

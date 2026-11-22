@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"math"
-	"os"
 	"sync"
 	"testing"
 	"time"
@@ -20,26 +19,15 @@ import (
 	resourcepb "go.opentelemetry.io/proto/otlp/resource/v1"
 	tracepb "go.opentelemetry.io/proto/otlp/trace/v1"
 
-	"github.com/Sendiw14/Traceflow/services/trace-api/db"
 	"github.com/Sendiw14/Traceflow/services/trace-api/internal/normalize"
+	"github.com/Sendiw14/Traceflow/services/trace-api/internal/testdb"
 )
 
 var ctx = context.Background()
 
 func testStore(t *testing.T) (*Store, *pgxpool.Pool) {
 	t.Helper()
-	url := os.Getenv("TRACEFLOW_TEST_DATABASE_URL")
-	if url == "" {
-		t.Skip("TRACEFLOW_TEST_DATABASE_URL not set")
-	}
-	pool, err := pgxpool.New(ctx, url)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(pool.Close)
-	if err := db.Migrate(pool); err != nil {
-		t.Fatal(err)
-	}
+	pool := testdb.Open(t, "store")
 	if _, err := pool.Exec(ctx, `TRUNCATE spans, span_conflicts, trace_summaries, resources, scopes, ingestion_records RESTART IDENTITY CASCADE`); err != nil {
 		t.Fatal(err)
 	}

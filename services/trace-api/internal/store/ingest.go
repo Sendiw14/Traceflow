@@ -145,6 +145,13 @@ func (s *Store) Ingest(ctx context.Context, b *normalize.Batch, m Meta) (Result,
 		}
 	}
 
+	if res.Accepted > res.Duplicate {
+		// First accepted span ever (API IngestionStatus.first_span_received_at); never overwritten.
+		if _, err := tx.Exec(ctx, `INSERT INTO settings (key, value) VALUES ('first_span_received_at', to_jsonb((extract(epoch FROM now()) * 1e9)::bigint::text))
+			ON CONFLICT (key) DO NOTHING`); err != nil {
+			return res, err
+		}
+	}
 	if afterSummaryHook != nil {
 		afterSummaryHook()
 	}

@@ -39,7 +39,11 @@ jobs:
       - name: gofmt
         run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
       - run: go vet ./...
-      - name: go test -race (incl. PostgreSQL integration)
+      - name: Generated API models match api/openapi.yaml
+        run: |
+          go generate ./internal/api
+          git diff --exit-code internal/api/gen.go
+      - name: go test -race (incl. PostgreSQL integration + OpenAPI contract tests)
         run: go test -race -count=1 ./...
       - run: go build ./cmd/server
       - name: demo-system vet + build
