@@ -124,3 +124,18 @@ Explicit `parent_present` and `quality` flags; `Percentiles` nulls with floors; 
 
 ### 5.4 Verdict
 **APPROVED** for the frontend consumer side of the M1 contract freeze, subject to: (1) none of N-1…N-8 blocks; Opus may resolve in 0.2.1 or at freeze; (2) approval is based on reading the YAML and one lint run, not on codegen or contract tests (NOT TESTED); (3) R-16 relies on a demo re-stamp job that does not exist yet. Freeze also still needs Opus's own sign-off and the owner.
+
+## 6. M5 implementation findings (API 1.0.0 consumed by `apps/web`) — 2026-11-23
+
+Written while building the UI against the real query API (main `34c94c0`). **None blocks M5**; the first needs an owner decision before M6. Nothing in `api/openapi.yaml` was edited.
+
+| ID | Severity | Finding | Evidence | Suggested resolution (owner: Opus) |
+| --- | --- | --- | --- | --- |
+| C-1 | **Decide before M6** | `updateSettings` requires `X-Traceflow-Actor` to be a *numeric GitHub ID* (`400 invalid_format: numeric GitHub ID required` for e.g. `local-dev`). M5 has no sign-in, so the BFF sends sentinel `"0"` and the audit row records actor `0`. | `PATCH /v1/settings` with `X-Traceflow-Actor: local-dev` → 400; with `0` → 200. | Document the local-dev sentinel (or allow a `local-dev` literal only in the `local-dev` profile). In M6 the BFF must send the session's GitHub ID and **`operator-prod` must not serve `/app/settings` until it does**. |
+| C-2 | Low (cost) | `getTrace` gives no hint of trace size before the call, so the UI fetches `detail=lite` first and a second `detail=full` when `spans.length ≤ 1000`. Two round trips for every normal trace. | `apps/web/src/app/app/traces/[traceId]/page.tsx`. | Optional `detail=auto` (server picks lite above its own threshold and says which it used), or a `span_count` on a lightweight trace head. Not needed for correctness. |
+| C-3 | Low | `TraceSummary` has `start_unix_nano` and `duration` but no end time; the trace page derives "End" from the maximum span end of the *returned* spans, which is wrong for truncated traces (`truncation != null`). | Header "End" in the trace page. | Add `end_unix_nano` (or document that End is unavailable when truncated). UI currently labels End as derived from returned spans only when truncated is not shown separately. |
+| C-4 | Info | The `bucket_seconds` enum includes 60 s but 7 d at 60 s or 300 s exceeds the 2 000-point cap (`window_too_large`). The UI clamps (`chooseBucket`), so users never see the 400. | `apps/web/src/lib/time/window.ts`, unit-tested. | Fine as is; consider stating the valid (window, bucket) pairs in the operation description so other clients need not rediscover the cap. |
+| C-5 | Info | Unknown trace or service returns `404 not_found`; the app renders an in-page "not found" state (HTTP 200 from Next). No contract change needed. | `service.not-found`, `trace.not-found` test IDs. | None. |
+| C-6 | Info | `Overview.recent_traces` length is unspecified (observed 20) and not controllable. The UI shows whatever arrives and links to the full list. | Overview panel. | Document the cap or add a `limit`. |
+
+**UI semantics honoured** (checked against `api-contract.md` "Semantics the UI must honour"): `observed_range_estimate` → "≈"/estimate notice; `parent_present=false` → "Parent span not received" group, never an invented parent; negative durations excluded from axis and drawn as a marker with "clock skew"; null percentiles → "—" with the sample-floor reason; `LatencyPoint.stats = null` → gap, `partial` → hatched "still filling" bucket excluded from lines; `Population.note` shown with aggregates; `truncation` → persistent banner; `read_only` → no edit controls; `freshness` shown on every data page.
