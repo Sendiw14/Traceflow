@@ -138,17 +138,15 @@ jobs:
           # keep only result lines; build/progress output must not count
           grep -E '^(normal|slow|error|parallel|missing-parent) [0-9a-f]{32} [0-9]{3}$' load.raw | tee load.out
           test "$(wc -l < load.out)" -eq 5
-          for _ in $(seq 1 30); do
-            n=$(docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "select count(*) from trace_summaries")
-            [ "$n" -ge 5 ] && break; sleep 2
-          done
           q(){ docker compose exec -T postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "$1"; }
           shape(){ q "select span_count||' '||root_count||' '||orphan_count||' '||(error_span_count>0) from trace_summaries where trace_id=decode('$(awk -v s="$1" '$1==s{print $2}' load.out)','hex')"; }
-          test "$(shape normal)" = "6 1 0 false"
-          test "$(shape slow)" = "6 1 0 false"
-          test "$(shape error)" = "6 1 0 true"
-          test "$(shape parallel)" = "9 1 0 false"
-          test "$(shape missing-parent)" = "5 0 1 false"
+          # traffic service also writes traces, so wait per scenario trace (Collector batches ~1 s).
+          expect(){ for _ in $(seq 1 30); do [ "$(shape "$1")" = "$2" ] && return 0; sleep 2; done; echo "$1: got [$(shape "$1")] want [$2]"; return 1; }
+          expect normal "6 1 0 false"
+          expect slow "6 1 0 false"
+          expect error "6 1 0 true"
+          expect parallel "9 1 0 false"
+          expect missing-parent "5 0 1 false"
           slow=$(q "select root_duration_nano from trace_summaries where trace_id=decode('$(awk '$1=="slow"{print $2}' load.out)','hex')")
           test "$slow" -ge 800000000
           test "$(q "select count(*) from ingestion_records where source='collector' and http_status=200")" -ge 1
