@@ -4,19 +4,13 @@ import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { loadMoreTraces, type TraceQuery } from "@/app/app/traces/actions";
 import { formatCount, formatDateTime, shortId } from "@/lib/format";
-import { formatDuration, parseNanos } from "@/lib/time/nanos";
+import { parseNanos } from "@/lib/time/nanos";
 import type { Schemas } from "@/lib/server/data";
 import { Badge } from "./ui";
+import { traceDuration } from "./traceDuration";
 import { Column, SortableTable } from "./SortableTable";
 
 type T = Schemas["TraceSummary"];
-
-export function traceDuration(t: T) {
-  const v = parseNanos(t.duration.value_nano, { signed: true });
-  if (v < 0n) return <Badge tone="warn">clock skew</Badge>;
-  const est = t.duration.basis === "observed_range_estimate";
-  return <span title={est ? "Estimate from observed span range (no single root span)" : "Root span duration"}>{est ? "≈ " : ""}{formatDuration(v)}</span>;
-}
 
 function completeness(t: T) {
   const c = t.completeness;

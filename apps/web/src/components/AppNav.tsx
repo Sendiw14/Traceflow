@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 // Only routes that exist (no phantom links).
 const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/app", label: "Overview", exact: true },
+  { href: "/app/traces", label: "Traces" },
 ];
 
 export function AppNav() {
