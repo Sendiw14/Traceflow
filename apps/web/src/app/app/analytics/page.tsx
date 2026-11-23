@@ -148,7 +148,7 @@ function ErrorTable({ caption, first, rows }: { caption: string; first: string; 
             <td data-label="Errors" className="num">{formatCount(r.errors)}</td>
             <td data-label="Error rate" className="num">{formatFraction(r.fraction)}</td>
             <td data-label="Requests" className="num">{formatCount(r.requests)}</td>
-            <td data-label="Recent error traces">{r.traces.length === 0 ? "—" : <span className="flex flex-wrap gap-2">{r.traces.map((t) => <Link key={t} href={`/app/traces/${t}`} className="mono" aria-label={`Error trace ${t}`}>{shortId(t)}</Link>)}</span>}</td>
+            <td data-label="Recent error traces">{r.traces.length === 0 ? "—" : <span className="flex flex-wrap gap-2">{r.traces.map((t) => <Link key={t} href={`/app/traces/${t}`} className="mono" aria-label={`Error trace ${shortId(t)}`}>{shortId(t)}</Link>)}</span>}</td>
           </tr>
         ))}</tbody>
       </table>

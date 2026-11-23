@@ -21,7 +21,9 @@
 
 html { background: var(--tf-canvas); color: var(--tf-ink); font-family: var(--tf-font-ui); }
 body { margin: 0; font-size: 16px; line-height: 24px; }
-a { color: var(--tf-signal-strong); }
+@layer base {
+  a { color: var(--tf-signal-strong); text-decoration: underline; text-underline-offset: 2px; }
+}
 
 /* Focus is always visible and never hover-dependent (WCAG 2.4.7/2.4.13). */
 :focus-visible {

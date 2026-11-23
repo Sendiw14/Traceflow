@@ -195,3 +195,23 @@ Test IDs: `system.404`, `system.500`, `system.session-expired`; cases `AUTH-02`,
 
 ## 4. Coverage check (spec §8 ↔ this matrix)
 Public: `/`, `/docs`, `/docs/getting-started`, `/docs/instrumentation`, `/docs/architecture`, `/docs/deployment`, `/docs/security`, `/login`, `/demo`, `/demo/traces/[traceId]` = 10/10. App: `/app`, `/app/onboarding`, `/app/traces`, `/app/traces/[traceId]`, `/app/services`, `/app/services/[serviceName]`, `/app/map`, `/app/analytics`, `/app/settings` = 9/9. Every operationId in `openapi.yaml` is consumed: `getLiveness/getReadiness` (BFF-only health proxy, no UI route; **not consumed by browser**), `getOverview`, `listTraces`, `getTrace`, `getSpan`, `getLatencyDistribution`, `listServices`, `getService`, `getDependencies`, `getServerLatency`, `getIngestionStatus`, `getSettings`, `updateSettings`.
+
+## 5. M5 implementation deltas (2026-11-23, `apps/web` on `m5-ui`)
+
+The matrix above stays the design intent. Where the first implementation differs, it is listed here so reviewers do not mistake a gap for a pass.
+
+| Area | Matrix says | Implemented in M5 | Follow-up |
+| --- | --- | --- | --- |
+| Time range | presets plus absolute `from`/`to`, `tz=utc\|local` | presets only (`15m…7d`), UTC only | absolute range and `tz` need a client picker |
+| Service scope | ARIA combobox | native `<select>` in a GET form (works without JS) | revisit if > ~50 services |
+| Polling | overview polls every 5 s automatically | opt-in "Auto-refresh" checkbox (visibility-aware, never overlapping); onboarding polls 3 s while waiting; trace page polls 10 s only while spans are still arriving | decide default once load is measured |
+| Trace inspector | bottom sheet < 768 px | inline panel at every width | sheet if usability testing asks for it |
+| Trace default view | Tree on mobile | Waterfall everywhere (inner scroll); large traces (> 5 000 spans) open as a collapsed Tree | tree-first on mobile |
+| Large traces | windowed rendering, measured | collapsed tree + banner; lite payload above 1 000 spans (initial guess); **not measured on real large traces** | generate a 5 000-span trace and measure |
+| Map | pan/zoom with buttons; pointer drag never required | buttons and keyboard only (no pointer drag yet) | optional drag |
+| Settings preferences | timezone, time format | omitted (only UTC exists; a control that does nothing would be a phantom feature) | with `tz=local` |
+| `raw-json` region | not rendered until it exists | not rendered | — |
+| HTTP status of not-found states | 404 view | invalid trace ID → 404 view (HTTP 200 because the response streams); unknown service/trace → in-page not-found state | — |
+| Public site, `/docs`, `/login`, `/demo*` | in scope of the matrix | **not built in M5** (app routes first) | later round |
+
+Verified in M5 (real stack): J-02, J-03 (keyboard only), J-04, axe WCAG 2.2 A/AA on all nine app views including trace detail with inspector/tree/table open, 375 px reflow on every app route. See `docs/workflow/integration-log.md` M5-E.

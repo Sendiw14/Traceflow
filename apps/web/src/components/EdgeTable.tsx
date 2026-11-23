@@ -28,7 +28,7 @@ export function EdgeTable({ edges, caption, selected, onSelect, filterable, test
     { id: "last", header: "Last seen", sort: (e) => parseNanos(e.evidence.last_seen_unix_nano), cell: (e) => formatDateTime(e.evidence.last_seen_unix_nano) },
     { id: "samples", header: "Sample traces", cell: (e) => (
       <span className="flex flex-wrap gap-2">
-        {e.evidence.sample_trace_ids.length === 0 ? "—" : e.evidence.sample_trace_ids.map((t) => <Link key={t} href={`/app/traces/${t}`} className="mono" aria-label={`Sample trace ${t}`}>{shortId(t)}</Link>)}
+        {e.evidence.sample_trace_ids.length === 0 ? "—" : e.evidence.sample_trace_ids.map((t) => <Link key={t} href={`/app/traces/${t}`} className="mono" aria-label={`Sample trace ${shortId(t)}`}>{shortId(t)}</Link>)}
       </span>) },
   ];
   return (

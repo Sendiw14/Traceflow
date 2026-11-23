@@ -90,11 +90,13 @@ export default async function AppOverview({ searchParams }: { searchParams: Prom
             {([["Accepted", ing.data.spans_accepted], ["Duplicate", ing.data.spans_duplicate], ["Rejected", ing.data.spans_rejected], ["Conflicts", ing.data.spans_conflict], ["Received", ing.data.spans_received]] as const).map(([k, v]) => (
               <div key={k}><dt className="text-ink-3">{k}</dt><dd className="m-0 tabular-nums">{formatCount(v)}</dd></div>
             ))}
-            <div className="col-span-2 md:col-span-5 text-ink-3">
-              {ing.data.last_request_at ? `Last ingest request ${formatDateTime(ing.data.last_request_at)}.` : "No ingest request has been received."}{" "}
-              Counts are for the selected window. <Link href="/app/onboarding">Connection help</Link>
-            </div>
           </dl>
+        )}
+        {ing.ok && (
+          <p className="mt-2 text-sm text-ink-3">
+            {ing.data.last_request_at ? `Last ingest request ${formatDateTime(ing.data.last_request_at)}.` : "No ingest request has been received."}{" "}
+            Counts are for the selected window. <Link href="/app/onboarding">Connection help</Link>
+          </p>
         )}
       </Panel>
       <SamplingCaveat />

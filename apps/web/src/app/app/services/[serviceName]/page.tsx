@@ -19,7 +19,7 @@ function Exemplars({ ex, errors }: { ex: Schemas["ServerStats"]["exemplars"]; er
   const items: React.ReactNode[] = [];
   if (ex.slowest_trace_id) items.push(<Link key="s" href={`/app/traces/${ex.slowest_trace_id}${qs({ span: ex.slowest_span_id ?? undefined })}`}>slowest request</Link>);
   if (ex.latest_error_trace_id) items.push(<Link key="e" href={`/app/traces/${ex.latest_error_trace_id}${qs({ span: ex.latest_error_span_id ?? undefined })}`}>latest error</Link>);
-  for (const t of errors.slice(0, 3)) items.push(<Link key={t} href={`/app/traces/${t}`} className="mono" aria-label={`Error trace ${t}`}>{shortId(t)}</Link>);
+  for (const t of errors.slice(0, 3)) items.push(<Link key={t} href={`/app/traces/${t}`} className="mono" aria-label={`Error trace ${shortId(t)}`}>{shortId(t)}</Link>);
   return items.length === 0 ? <>—</> : <span className="flex flex-wrap gap-2">{items}</span>;
 }
 

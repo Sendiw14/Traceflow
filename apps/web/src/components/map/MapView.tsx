@@ -104,7 +104,6 @@ export function MapView({ nodes, edges }: { nodes: S[]; edges: E[] }) {
                     const err = (s.server.error_fraction ?? 0) > 0;
                     return (
                       <g key={n.id} id={idx(n.id)} role="option" aria-selected={isSel} data-testid="map.node"
-                        aria-label={`${n.id}: ${noServer ? "no server spans" : `${formatCount(s.server.request_count)} requests, error rate ${formatFraction(s.server.error_fraction)}`}`}
                         transform={`translate(${n.x} ${n.y})`} onClick={() => { setFocus(n.id); selectNode(n.id); }} className="cursor-pointer">
                         <rect width={NODE_W} height={NODE_H} rx="8" fill={isSel ? "var(--tf-signal-tint)" : "var(--tf-paper)"} stroke={focus === n.id ? "var(--tf-focus)" : "var(--tf-ink-2)"} strokeWidth={focus === n.id ? bucket + 2 : bucket} strokeDasharray={noServer ? "4 3" : undefined} />
                         <text x="12" y="23" fontSize="14" fontWeight="600" fill="var(--tf-ink)">{n.id.length > 18 ? `${n.id.slice(0, 17)}…` : n.id}</text>
@@ -131,7 +130,7 @@ export function MapView({ nodes, edges }: { nodes: S[]; edges: E[] }) {
             <p className="m-0 font-medium">{edge.source} → {edge.target}</p>
             <p className="mt-1 text-sm text-ink-2">{edgeEvidenceText(edge)}</p>
             <p className="mt-1 text-sm text-ink-3">{formatCount(edge.evidence.trace_count)} traces · {formatCount(edge.evidence.parent_child_pairs)} parent→child pairs · {formatCount(edge.evidence.error_pairs ?? 0)} with errors</p>
-            <p className="mt-2 flex flex-wrap gap-2 text-sm">Supporting traces: {edge.evidence.sample_trace_ids.length === 0 ? "none sampled" : edge.evidence.sample_trace_ids.map((t) => <Link key={t} href={`/app/traces/${t}`} className="mono" aria-label={`Supporting trace ${t}`}>{shortId(t)}</Link>)}</p>
+            <p className="mt-2 flex flex-wrap gap-2 text-sm">Supporting traces: {edge.evidence.sample_trace_ids.length === 0 ? "none sampled" : edge.evidence.sample_trace_ids.map((t) => <Link key={t} href={`/app/traces/${t}`} className="mono" aria-label={`Supporting trace ${shortId(t)}`}>{shortId(t)}</Link>)}</p>
           </div>
         ) : node ? (
           <div data-testid="map.details.node">
