@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
+  agentRules: false, // do not generate AGENTS.md on dev start
   reactStrictMode: true,
   async headers() {
     // Private routes must never be cached (spec §11, AC-API-03).

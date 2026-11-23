@@ -34,4 +34,5 @@
 | M4-002 Benchmark PERF-01/02 on dev host | Opus | DONE — targets met on dev host; reference Linux host NOT TESTED | benchmark-results.md |
 | M4-OPEN reference-host benchmark; 7-day window aggregates; dependencies query optimisation if needed; Sonnet: switch UI fixtures to real API (M5) | Opus/Sonnet | TODO | |
 | M5-OPUS Compose web env (TRACE_API_URL, token) + local `traffic` generator (5 scenarios / 15 s) | Opus | DONE (local: traces 5→15 in 32 s) | |
-| M5-UI All /app routes on real API, states, BFF, Playwright J-02/J-03/J-04, axe | Sonnet | IN PROGRESS | branch m5-ui |
+| M5-UI All /app routes on real API, states, BFF, Playwright J-02/J-03/J-04, axe | Sonnet | DONE (merged; Opus re-ran: web checks PASS, 54 unit, 32/32 e2e) | C-1 actor sentinel must be replaced in M6 |
+| M5-OPEN Public site, docs, /login, /demo routes; API C-2/C-3/C-6 additive changes | Sonnet / Opus | TODO | |
