@@ -27,3 +27,18 @@ describe("resolveWindow", () => {
     expect(p.to - p.from).toBe(w.to - w.from);
   });
 });
+
+import { chooseBucket } from "./window";
+describe("chooseBucket", () => {
+  const now = 1_763_800_000_000;
+  it("uses a valid request, else the window default", () => {
+    expect(chooseBucket(resolveWindow("1h", now), "300")).toBe(300);
+    expect(chooseBucket(resolveWindow("1h", now), "7")).toBe(60);
+    expect(chooseBucket(resolveWindow("1h", now), undefined)).toBe(60);
+  });
+  it("never exceeds the 2000-point cap", () => {
+    expect(chooseBucket(resolveWindow("7d", now), "60")).toBe(3600);
+    expect(chooseBucket(resolveWindow("7d", now), "300")).toBe(3600);
+    expect(chooseBucket(resolveWindow("7d", now), "900")).toBe(900);
+  });
+});

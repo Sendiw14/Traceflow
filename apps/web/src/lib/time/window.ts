@@ -33,3 +33,15 @@ export function previousWindow(w: Window): Window {
   const len = w.to - w.from;
   return { ...w, from: w.from - len, to: w.from };
 }
+
+export const BUCKETS = [60, 300, 900, 3600] as const;
+const MAX_POINTS = 2000; // API cap (window_too_large)
+
+/** Requested bucket if valid and within the 2 000-point cap, else the window default (or the smallest bucket that fits). */
+export function chooseBucket(w: Window, requested: string | undefined): number {
+  const seconds = Number((w.to - w.from) / 1_000_000_000n);
+  const fits = (b: number) => seconds / b <= MAX_POINTS;
+  const asked = requested === undefined ? NaN : Number(requested);
+  if ((BUCKETS as readonly number[]).includes(asked) && fits(asked)) return asked;
+  return fits(w.bucketSeconds) ? w.bucketSeconds : (BUCKETS.find(fits) ?? 3600);
+}

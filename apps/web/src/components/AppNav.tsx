@@ -7,6 +7,9 @@ import { usePathname } from "next/navigation";
 const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/app", label: "Overview", exact: true },
   { href: "/app/traces", label: "Traces" },
+  { href: "/app/services", label: "Services" },
+  { href: "/app/map", label: "Map" },
+  { href: "/app/analytics", label: "Analytics" },
 ];
 
 export function AppNav() {

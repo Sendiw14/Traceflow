@@ -23,3 +23,10 @@ describe("series adapters", () => {
     expect(throughputPoints(pts, 60).map((p) => p.v)).toEqual([2, null, 0.1]);
   });
 });
+
+import { shiftPoints } from "./series";
+describe("shiftPoints", () => {
+  it("moves timestamps and keeps values", () => {
+    expect(shiftPoints([{ t: 1000, v: 5 }, { t: 2000, v: null }], 500)).toEqual([{ t: 1500, v: 5 }, { t: 2500, v: null }]);
+  });
+});

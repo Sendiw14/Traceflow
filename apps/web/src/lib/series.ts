@@ -13,3 +13,8 @@ export function errorPoints(points: Schemas["LatencyPoint"][]): ChartPoint[] {
 export function throughputPoints(points: Schemas["LatencyPoint"][], bucketSeconds: number): ChartPoint[] {
   return points.map((p) => ({ t: toMs(p.bucket_start_unix_nano), partial: p.partial, v: p.stats ? p.stats.request_count / bucketSeconds : null }));
 }
+
+/** Shift a series forward in time (previous-period comparison drawn over the current window). */
+export function shiftPoints(points: ChartPoint[], ms: number): ChartPoint[] {
+  return points.map((p) => ({ ...p, t: p.t + ms }));
+}

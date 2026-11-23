@@ -55,3 +55,8 @@ const TRACE_ID = /^[0-9a-f]{32}$/;
 const SPAN_ID = /^[0-9a-f]{16}$/;
 export const isTraceId = (v: string) => TRACE_ID.test(v);
 export const isSpanId = (v: string) => SPAN_ID.test(v);
+
+/** Route params may arrive percent-encoded; decode once, falling back to the raw value if malformed. */
+export function decodeParam(v: string): string {
+  try { return decodeURIComponent(v); } catch { return v; }
+}
