@@ -49,3 +49,9 @@ export function nanosToNumber(ns: string | bigint | null): number | null {
   if (ns === null) return null;
   return Number(typeof ns === "bigint" ? ns : parseNanos(ns, { signed: true }));
 }
+
+export function formatBytes(n: number): string {
+  if (n >= 1024 * 1024) return `${+(n / (1024 * 1024)).toFixed(1)} MiB`;
+  if (n >= 1024) return `${+(n / 1024).toFixed(1)} KiB`;
+  return `${n} B`;
+}

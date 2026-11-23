@@ -45,3 +45,9 @@ export function chooseBucket(w: Window, requested: string | undefined): number {
   if ((BUCKETS as readonly number[]).includes(asked) && fits(asked)) return asked;
   return fits(w.bucketSeconds) ? w.bucketSeconds : (BUCKETS.find(fits) ?? 3600);
 }
+
+/** [now − seconds, now) in ns, for status-style queries that are not tied to the range presets. */
+export function recentWindow(seconds: number, nowMs: number = Date.now()): { from: bigint; to: bigint } {
+  const to = BigInt(nowMs) * 1_000_000n;
+  return { from: to - BigInt(seconds) * 1_000_000_000n, to };
+}

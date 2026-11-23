@@ -10,6 +10,8 @@ const NAV: { href: string; label: string; exact?: boolean }[] = [
   { href: "/app/services", label: "Services" },
   { href: "/app/map", label: "Map" },
   { href: "/app/analytics", label: "Analytics" },
+  { href: "/app/onboarding", label: "Onboarding" },
+  { href: "/app/settings", label: "Settings" },
 ];
 
 export function AppNav() {

@@ -78,3 +78,8 @@ export const getSpan = (traceId: string, spanId: string) =>
   call((c) => c.GET("/v1/traces/{traceId}/spans/{spanId}", { params: { path: { traceId, spanId } } }));
 export const listTraces = (q: { from: bigint; to: bigint; service?: string; status?: "any" | "error" | "ok_or_unset"; minDurationNano?: bigint; cursor?: string; limit?: number }) =>
   call((c) => c.GET("/v1/traces", { params: { query: { from: ns(q.from), to: ns(q.to), service: q.service, status: q.status, min_duration_nano: q.minDurationNano === undefined ? undefined : ns(q.minDurationNano), cursor: q.cursor, limit: q.limit } } }));
+
+/** M5 has no sign-in (ADR-0005 lands in M6): audit rows use sentinel actor "0", which is not a real GitHub ID. M6 must replace this with the session identity before operator-prod can serve /app/settings. */
+const LOCAL_DEV_ACTOR = "0";
+export const updateSettings = (body: Schemas["SettingsPatch"]) =>
+  call((c) => c.PATCH("/v1/settings", { params: { header: { "X-Traceflow-Actor": LOCAL_DEV_ACTOR } }, body }));

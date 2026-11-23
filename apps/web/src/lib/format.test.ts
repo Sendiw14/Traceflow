@@ -22,3 +22,13 @@ describe("format", () => {
     expect(formatClock("1763800000123456789")).toBe("08:26:40");
   });
 });
+
+import { formatBytes } from "./format";
+describe("formatBytes", () => {
+  it("uses binary units", () => {
+    expect(formatBytes(4194304)).toBe("4 MiB");
+    expect(formatBytes(16777216)).toBe("16 MiB");
+    expect(formatBytes(1536)).toBe("1.5 KiB");
+    expect(formatBytes(12)).toBe("12 B");
+  });
+});
