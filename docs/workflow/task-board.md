@@ -30,6 +30,8 @@
 | M3-GATE M3 exit review | Opus + owner | APPROVED by owner 2026-11-22 | |
 | M3-OPEN OTLP-19 direct SDK retry-on-503 test; persistent Collector queue eval; failure drills (PG/Collector restart) | Opus | TODO | M6 at latest |
 | M4-001 Query API (all 1.0.0 operations), generated Go models, contract + oracle tests | Opus | DONE (CI run 45039390875 green) | |
-| M4-GATE M4 exit review | Opus + owner | READY FOR OWNER | see integration-log M4 |
+| M4-GATE M4 exit review | Opus + owner | APPROVED by owner 2026-11-23 | |
 | M4-002 Benchmark PERF-01/02 on dev host | Opus | DONE — targets met on dev host; reference Linux host NOT TESTED | benchmark-results.md |
 | M4-OPEN reference-host benchmark; 7-day window aggregates; dependencies query optimisation if needed; Sonnet: switch UI fixtures to real API (M5) | Opus/Sonnet | TODO | |
+| M5-OPUS Compose web env (TRACE_API_URL, token) + local `traffic` generator (5 scenarios / 15 s) | Opus | DONE (local: traces 5→15 in 32 s) | |
+| M5-UI All /app routes on real API, states, BFF, Playwright J-02/J-03/J-04, axe | Sonnet | IN PROGRESS | branch m5-ui |

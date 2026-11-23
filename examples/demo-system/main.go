@@ -228,8 +228,26 @@ func inventory(w http.ResponseWriter, r *http.Request) {
 	_, _ = fmt.Fprintln(w, "ok")
 }
 
-// load triggers each scenario once and prints "scenario trace_id".
+// load triggers each scenario once and prints "scenario trace_id status". With
+// DEMO_LOAD_INTERVAL set it repeats forever (errors are logged, not fatal).
 func load() error {
+	interval := os.Getenv("DEMO_LOAD_INTERVAL")
+	if interval == "" {
+		return loadOnce()
+	}
+	d, err := time.ParseDuration(interval)
+	if err != nil || d < time.Second {
+		return fmt.Errorf("DEMO_LOAD_INTERVAL must be a duration >= 1s, got %q", interval)
+	}
+	for {
+		if err := loadOnce(); err != nil {
+			log.Printf("load: %v", err)
+		}
+		time.Sleep(d)
+	}
+}
+
+func loadOnce() error {
 	base := env("GATEWAY_URL", "http://gateway:8080")
 	var lines []string
 	for _, sc := range scenarios {

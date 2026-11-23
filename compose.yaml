@@ -42,7 +42,9 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    # M2 shell reads no env yet; trace-api URL and service token are added when the BFF lands (M5).
+    environment:
+      TRACE_API_URL: http://trace-api:8080
+      TRACEFLOW_SERVICE_TOKEN: ${TRACEFLOW_SERVICE_TOKEN:?run make env}
     depends_on:
       trace-api: { condition: service_healthy }
     networks: [edge, app]
@@ -81,6 +83,18 @@ services:
     networks: [demo]
     profiles: [tools]
     depends_on: [gateway, orders, inventory]
+
+  # local-dev only: steady synthetic traffic so the UI always has fresh traces.
+  traffic:
+    build: ./examples/demo-system
+    command: ["load"]
+    environment:
+      DEMO_LOAD_INTERVAL: 15s
+    networks: [demo]
+    depends_on: [gateway, orders, inventory]
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
 
   collector:
     image: otel/opentelemetry-collector-contrib:0.165.0@sha256:e40d61f10c9a617cca1ffd1be4d7e2b3a4b0f0001798ff07e58cabe82e618cea
