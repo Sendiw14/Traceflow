@@ -252,3 +252,9 @@ FINAL: PASS (local) — CI pending
 ```
 
 M4 CI: run 45039003998 failed only in compose-smoke (probe still expected M2-era 404 for /v1/overview; fixed 840697b). Run https://github.com/Sendiw14/Traceflow/actions/runs/45039390875 on 840697b → go (incl. codegen drift check, PostgreSQL integration, OpenAPI contract + oracle tests, -race), contracts, web, secrets, compose-smoke all success. FINAL: PASS (M4 gate criteria on dev host; reference-host benchmark NOT TESTED).
+
+## M5-A — BFF data layer + `/app` overview (Sonnet, branch `m5-ui`)
+- **Scope:** `apps/web` only. `import "server-only"` in `src/lib/api/client.ts`; `src/lib/server/data.ts` is the only trace-api caller (env `TRACE_API_URL`, `TRACEFLOW_SERVICE_TOKEN`, never browser-visible; errors normalised to `Result<T>`). Shared UI (Notice/Empty/Problem/Kpi/Skeleton, accessible sortable table, SVG `TimeSeriesChart` with keyboard + table view, Freshness with visibility-aware `router.refresh()` polling), `/app` overview with all matrix panels and states, route-aware `aria-current`, `/app` stays `force-dynamic` + `private, no-store`.
+- **Commands / results (local, Node v24.11.1):** `pnpm test` PASS (Vitest: windows, params, formatting, series, chart, problem copy); `pnpm lint` PASS; `pnpm typecheck` PASS. Manual: `/app` rendered against a real isolated stack (Postgres 18.7 + trace-api built from `services/trace-api` + demo gateway/orders/inventory, all in Docker) with live traces: KPIs, null-percentile reason (`p99 needs 100 samples; this window has 60`), exemplar link.
+- **NOT TESTED:** Playwright/axe (written with the route groups), Node 26, behaviour under `operator-prod`.
+- **Deviations (documented):** service scope is a native `<select>` GET form (not an ARIA combobox); times are UTC only (no `tz=local` toggle yet); range is presets only (no custom absolute `from`/`to` yet).
