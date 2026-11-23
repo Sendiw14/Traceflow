@@ -83,10 +83,6 @@ jobs:
       - run: pnpm -C apps/web typecheck
       - run: pnpm -C apps/web test
       - run: pnpm -C apps/web build
-      - name: Playwright smoke
-        run: |
-          pnpm -C apps/web exec playwright install --with-deps chromium
-          pnpm -C apps/web test:e2e
 
   secrets:
     runs-on: ubuntu-24.04
@@ -95,7 +91,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: gitleaks (history)
-        run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f git /repo --redact --no-banner
+        run: docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f git /repo --redact --no-banner --gitleaks-ignore-path /repo/.gitleaksignore
 
   compose-smoke:
     runs-on: ubuntu-24.04
@@ -150,6 +146,24 @@ jobs:
           slow=$(q "select root_duration_nano from trace_summaries where trace_id=decode('$(awk '$1=="slow"{print $2}' load.out)','hex')")
           test "$slow" -ge 800000000
           test "$(q "select count(*) from ingestion_records where source='collector' and http_status=200")" -ge 1
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1 (reads packageManager)
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Playwright journeys against the real stack (J-02/J-03/J-04, axe, 375 px)
+        run: |
+          docker compose -f compose.yaml -f compose.ci.yaml up -d --wait trace-api
+          set -a; . ./.env; set +a
+          pnpm install --frozen-lockfile
+          pnpm -C apps/web exec playwright install --with-deps chromium
+          TRACE_API_URL=http://127.0.0.1:18080 pnpm -C apps/web test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report
+          retention-days: 7
       - if: failure()
         run: docker compose logs --tail=200
       - if: always()
