@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { Freshness } from "@/components/Freshness";
-import { TimeSeriesChart } from "@/components/charts/TimeSeriesChart";
 import { RangeBar, SamplingCaveat, ServiceScope } from "@/components/Scope";
 import { ServicesTable } from "@/components/ServicesTable";
 import { TraceTable } from "@/components/TraceTable";
-import { EmptyState, Kpi, Notice, PageHeader, Panel, ProblemState } from "@/components/ui";
-import { formatClock, formatCount, formatDateTime, formatFraction, formatPercentile, insufficientReason } from "@/lib/format";
+import { Notice, PageHeader, Panel, ProblemState } from "@/components/ui";
+import { LatencyPanels } from "@/components/overview/LatencyPanels";
+import { OverviewBody } from "@/components/overview/OverviewBody";
+import { formatClock, formatCount, formatDateTime } from "@/lib/format";
 import { first, qs, type SearchParams } from "@/lib/query/params";
-import { errorPoints, latencyPoints, throughputPoints } from "@/lib/series";
-import { getIngestionStatus, getOverview, getServerLatency, listServices, type Schemas } from "@/lib/server/data";
-import { resolveWindow, type Window } from "@/lib/time/window";
+import { getIngestionStatus, getOverview, getServerLatency, listServices } from "@/lib/server/data";
+import { resolveWindow } from "@/lib/time/window";
 
 export const metadata = { title: "Overview" };
 
@@ -38,35 +38,10 @@ export default async function AppOverview({ searchParams }: { searchParams: Prom
       </div>
 
       {!ov.ok ? <ProblemState problem={ov.error} resetHref="/app" /> : (
-        <OverviewBody ov={ov.data} service={service} neverIngested={ing.ok && ing.data.first_span_received_at === null} w={w} />
+        <OverviewBody ov={ov.data} service={service} neverIngested={ing.ok && ing.data.first_span_received_at === null} w={w} base="/app" onboardingHref="/app/onboarding" />
       )}
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        {series.ok ? (
-          <>
-            <Panel title="Latency (SERVER spans)" id="lat" className="lg:col-span-2" testId="overview.latency-chart">
-              <TimeSeriesChart name="latency" title="Latency percentiles" unit="duration" bucketSeconds={w.bucketSeconds}
-                caption={`${w.bucketSeconds} s buckets · n=${formatCount(series.data.overall.population.sample_count)}`}
-                series={[
-                  { id: "p50", label: "p50", color: "var(--tf-signal)", points: latencyPoints(series.data.points, "p50") },
-                  { id: "p95", label: "p95", color: "var(--tf-violet)", dash: "6 3", points: latencyPoints(series.data.points, "p95") },
-                  { id: "p99", label: "p99", color: "var(--tf-ink-2)", dash: "2 3", points: latencyPoints(series.data.points, "p99") },
-                ]} />
-              <p className="mt-2 text-xs text-ink-3">{series.data.overall.population.note} Percentiles appear only when a bucket has enough samples (p95 ≥ 20, p99 ≥ 100).</p>
-            </Panel>
-            <Panel title="Error rate" id="err" testId="overview.error-chart">
-              <TimeSeriesChart name="errors" title="Error rate (error SERVER spans / SERVER spans)" unit="percent" bucketSeconds={w.bucketSeconds} caption={`${w.bucketSeconds} s buckets`}
-                series={[{ id: "err", label: "Error rate", color: "var(--tf-error)", points: errorPoints(series.data.points) }]} />
-            </Panel>
-            <Panel title="Throughput" id="thr" testId="overview.throughput-chart">
-              <TimeSeriesChart name="throughput" title="Requests per second (SERVER spans)" unit="rate" bucketSeconds={w.bucketSeconds} caption={`${w.bucketSeconds} s buckets`}
-                series={[{ id: "thr", label: "Requests/s", color: "var(--tf-signal-strong)", points: throughputPoints(series.data.points, w.bucketSeconds) }]} />
-            </Panel>
-          </>
-        ) : (
-          <div className="lg:col-span-2"><ProblemState problem={series.error} compact /></div>
-        )}
-      </div>
+      <LatencyPanels series={series} w={w} />
 
       <div className="mt-6 grid gap-4">
         {ov.ok && (
@@ -100,46 +75,6 @@ export default async function AppOverview({ searchParams }: { searchParams: Prom
         )}
       </Panel>
       <SamplingCaveat />
-    </div>
-  );
-}
-
-function OverviewBody({ ov, service, neverIngested, w }: { ov: Schemas["Overview"]; service?: string; neverIngested: boolean; w: Window }) {
-  const t = ov.totals;
-  const n = t.population.sample_count;
-  if (neverIngested) {
-    return (
-      <EmptyState state="empty-nodata" title="No data yet">
-        TRACEFLOW has not received any spans. <Link href="/app/onboarding">Connect an OpenTelemetry Collector</Link>.
-      </EmptyState>
-    );
-  }
-  if (n === 0 && ov.trace_count === 0) {
-    return (
-      <EmptyState state="empty-window" title="No spans in this window">
-        {service ? `No spans from ${service} between the selected times. ` : ""}Last span received{" "}
-        {ov.freshness.last_span_received_at ? `${formatDateTime(ov.freshness.last_span_received_at)}` : "never"}. Try a longer range.
-        {w.range !== "7d" && <> <Link href={`/app${qs({ range: "7d", service })}`}>Show last 7 d</Link></>}
-      </EmptyState>
-    );
-  }
-  const ex = t.exemplars;
-  const link = (tr: string | null, sp: string | null) => (tr ? `/app/traces/${tr}${qs({ span: sp ?? undefined })}` : undefined);
-  const pct = (key: "p50" | "p95" | "p99") => {
-    const v = t.latency[key];
-    return v === null ? { value: "—", note: insufficientReason(key, n) } : { value: formatPercentile(v), note: undefined };
-  };
-  return (
-    <div data-testid="overview.kpis">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <Kpi testId="overview.kpi.requests" label="Requests" value={formatCount(t.request_count)} note="SERVER spans" />
-        <Kpi testId="overview.kpi.error-rate" label="Error rate" value={formatFraction(t.error_fraction)} note={`${formatCount(t.error_count)} errors`} href={link(ex.latest_error_trace_id, ex.latest_error_span_id)} />
-        <Kpi testId="overview.kpi.p50" label="p50" {...pct("p50")} />
-        <Kpi testId="overview.kpi.p95" label="p95" {...pct("p95")} href={link(ex.slowest_trace_id, ex.slowest_span_id)} />
-        <Kpi testId="overview.kpi.p99" label="p99" {...pct("p99")} />
-        <Kpi testId="overview.kpi.traces" label="Traces" value={formatCount(ov.trace_count)} note="started in window" />
-      </div>
-      <p className="mt-2 text-xs text-ink-3" data-testid="overview.population">{t.population.note} n={formatCount(n)}.{ex.slowest_trace_id ? " “View example” under p95 opens the slowest request (server span)." : ""}</p>
     </div>
   );
 }

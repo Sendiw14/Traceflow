@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { AppNav } from "@/components/AppNav";
+import { assertArea } from "@/lib/profile";
 
 // Private segment: never prerender or share-cache (spec §7, §11).
 export const dynamic = "force-dynamic";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  assertArea("app"); // independent of proxy.ts
   return (
     <div className="min-h-screen md:grid md:grid-cols-[220px_minmax(0,1fr)]">
       <header className="flex items-center justify-between border-b border-line bg-paper px-4 py-3 md:hidden">

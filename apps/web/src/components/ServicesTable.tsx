@@ -10,8 +10,8 @@ import { Column, SortableTable } from "./SortableTable";
 type S = Schemas["ServiceSummary"];
 const pv = (s: string | null) => (s === null ? -1n : parseNanos(s));
 
-export function ServicesTable({ services, caption, searchable, rangeQuery, testId = "services.table" }: {
-  services: S[]; caption: string; searchable?: boolean; rangeQuery: string; testId?: string;
+export function ServicesTable({ services, caption, searchable, rangeQuery, testId = "services.table", serviceBase = "/app/services", serviceMode = "path" }: {
+  serviceBase?: string; serviceMode?: "path" | "query"; services: S[]; caption: string; searchable?: boolean; rangeQuery: string; testId?: string;
 }) {
   const [q, setQ] = useState("");
   const rows = q ? services.filter((s) => s.service_name.toLowerCase().includes(q.toLowerCase())) : services;
@@ -19,7 +19,7 @@ export function ServicesTable({ services, caption, searchable, rangeQuery, testI
     { id: "name", header: "Service", sort: (s) => s.service_name,
       cell: (s) => (
         <>
-          <Link href={`/app/services/${encodeURIComponent(s.service_name)}${rangeQuery}`}>{s.service_name}</Link>
+          <Link href={serviceMode === "path" ? `${serviceBase}/${encodeURIComponent(s.service_name)}${rangeQuery}` : `${serviceBase}?${rangeQuery ? `${rangeQuery.slice(1)}&` : ""}service=${encodeURIComponent(s.service_name)}#service`}>{s.service_name}</Link>
           {!s.observed_in_window && <span className="ml-2 text-xs text-ink-3">idle in window</span>}
         </>
       ) },

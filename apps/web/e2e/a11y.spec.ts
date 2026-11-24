@@ -14,7 +14,7 @@ async function scan(page: import("@playwright/test").Page, path: string) {
   expect(summary, `axe violations on ${path}`).toEqual([]);
 }
 
-for (const path of ["/app", "/app/traces", "/app/traces?status=error", "/app/services", "/app/services/orders", "/app/map", "/app/analytics", "/app/analytics?compare=1&service=orders", "/app/onboarding", "/app/settings"]) {
+for (const path of ["/", "/docs", "/docs/getting-started", "/docs/instrumentation", "/docs/architecture", "/docs/deployment", "/docs/security", "/demo", "/demo?service=orders&status=error", "/app", "/app/traces", "/app/traces?status=error", "/app/services", "/app/services/orders", "/app/map", "/app/analytics", "/app/analytics?compare=1&service=orders", "/app/onboarding", "/app/settings"]) {
   test(`axe: ${path}`, async ({ page }) => scan(page, path));
 }
 
@@ -33,4 +33,24 @@ test("axe: trace detail (waterfall, inspector open, tree, table)", async ({ page
   await run("tree");
   await page.getByTestId("trace.view.table").click();
   await run("table");
+});
+
+test("axe: landing after interaction (journey tabs, FAQ open, skip pressed)", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  await page.getByTestId("home.hero.skip").click();
+  await page.getByRole("tab").nth(4).click();
+  await page.getByTestId("home.faq.item").first().locator("summary").click();
+  const r = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+  expect(r.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
+});
+
+test("axe: demo trace detail with inspector open", async ({ page }) => {
+  const t = await findTrace("&status=error");
+  await page.goto(`/demo/traces/${t.trace_id}`);
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
+  await page.waitForLoadState("networkidle");
+  await page.getByTestId("trace.next-error").click();
+  const r = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+  expect(r.violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(" ")}`)).toEqual([]);
 });

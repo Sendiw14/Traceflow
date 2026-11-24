@@ -1,5 +1,6 @@
 "use server";
 
+import { actionAllowed } from "@/lib/profile";
 import { getTraceCursorPage } from "@/lib/server/traces";
 import type { Schemas } from "@/lib/server/data";
 
@@ -14,5 +15,6 @@ export type MoreResult = { ok: true; items: Schemas["TraceSummary"][]; next: str
 
 /** Server Action: the browser asks the BFF for the next page; trace-api stays server-side. */
 export async function loadMoreTraces(q: TraceQuery, cursor: string): Promise<MoreResult> {
+  if (!actionAllowed(null)) return { ok: false, message: "Not available in this deployment." };
   return getTraceCursorPage(q, cursor);
 }
