@@ -1,0 +1,103 @@
+name: release
+
+# Tag push vX.Y.Z (owner action) → verify → build → scan → push images to GHCR → DRAFT GitHub Release.
+# Publishing the draft is a manual human approval (spec §15 M8). Manual dispatch = dry run: build,
+# scan and SBOM only; nothing is pushed or released.
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write   # draft release
+      packages: write   # GHCR push
+      actions: read     # verify CI result for the commit
+    env:
+      TRIVY: aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version and mode
+        id: v
+        run: |
+          owner=$(printf '%s' "$GITHUB_REPOSITORY_OWNER" | tr '[:upper:]' '[:lower:]')
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            version=${GITHUB_REF_NAME#v}; publish=true
+          else
+            version=0.0.0-dryrun.${GITHUB_SHA::12}; publish=false
+          fi
+          {
+            echo "version=$version"; echo "publish=$publish"
+            echo "api=ghcr.io/$owner/traceflow-trace-api"; echo "web=ghcr.io/$owner/traceflow-web"
+          } >> "$GITHUB_OUTPUT"
+          echo "version=$version publish=$publish"
+
+      - name: Gate — tagged commit is on main and passed CI; CHANGELOG has the section
+        if: steps.v.outputs.publish == 'true'
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "tag is not on main"; exit 1; }
+          n=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&status=success" --jq '.total_count')
+          [ "$n" -ge 1 ] || { echo "no successful CI run for $GITHUB_SHA"; exit 1; }
+          grep -qE "^## \[${{ steps.v.outputs.version }}\] - [0-9]{4}-[0-9]{2}-[0-9]{2}$" CHANGELOG.md \
+            || { echo "CHANGELOG.md has no '## [${{ steps.v.outputs.version }}] - YYYY-MM-DD' section"; exit 1; }
+
+      - name: Build images (OCI labels link the package to this repository)
+        run: |
+          labels=(--label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY"
+                  --label "org.opencontainers.image.revision=$GITHUB_SHA"
+                  --label "org.opencontainers.image.version=${{ steps.v.outputs.version }}"
+                  --label "org.opencontainers.image.licenses=Apache-2.0")
+          docker build "${labels[@]}" -t "${{ steps.v.outputs.api }}:${{ steps.v.outputs.version }}" services/trace-api
+          docker build "${labels[@]}" -t "${{ steps.v.outputs.web }}:${{ steps.v.outputs.version }}" -f apps/web/Dockerfile .
+
+      - name: Scan (fail on fixable CRITICAL/HIGH) + SBOM
+        run: |
+          mkdir -p dist "$HOME/.cache/trivy"
+          t(){ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME/.cache/trivy:/root/.cache/trivy" -v "$PWD:/src" -w /src "$TRIVY" "$@"; }
+          for img in "${{ steps.v.outputs.api }}" "${{ steps.v.outputs.web }}"; do
+            ref="$img:${{ steps.v.outputs.version }}"; name=${img##*/}
+            t image --quiet --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$ref"
+            t image --quiet --format cyclonedx --output "dist/$name-${{ steps.v.outputs.version }}.cdx.json" "$ref"
+          done
+
+      - name: Push to GHCR and record digests
+        if: steps.v.outputs.publish == 'true'
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          : > dist/images.txt
+          for img in "${{ steps.v.outputs.api }}" "${{ steps.v.outputs.web }}"; do
+            docker push "$img:${{ steps.v.outputs.version }}"
+            docker image inspect "$img:${{ steps.v.outputs.version }}" --format '{{index .RepoDigests 0}}' >> dist/images.txt
+          done
+          cat dist/images.txt
+
+      - name: Draft GitHub Release (human publishes)
+        if: steps.v.outputs.publish == 'true'
+        run: |
+          v=${{ steps.v.outputs.version }}
+          awk -v v="$v" '$0 ~ "^## \\[" v "\\]" {p=1; next} p && /^## \[/ {exit} p' CHANGELOG.md > dist/notes.md
+          {
+            echo; echo "## Images (pin these in .env.production)"; echo '```'
+            sed -e "s|^\(.*traceflow-trace-api\)@|TRACEFLOW_TRACE_API_IMAGE=\1@|" -e "s|^\(.*traceflow-web\)@|TRACEFLOW_WEB_IMAGE=\1@|" dist/images.txt
+            echo '```'; echo; echo "Evidence: docs/testing/release-evidence.md at $GITHUB_SHA. Publishing this draft is the owner's release approval."
+          } >> dist/notes.md
+          gh release create "v$v" --draft --verify-tag --title "TRACEFLOW v$v" --notes-file dist/notes.md dist/*.cdx.json
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: release-${{ steps.v.outputs.version }}
+          path: dist/
+          retention-days: 30
