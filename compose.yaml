@@ -43,6 +43,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
     environment:
+      TRACEFLOW_PROFILE: ${TRACEFLOW_PROFILE:?set in .env}
       TRACE_API_URL: http://trace-api:8080
       TRACEFLOW_SERVICE_TOKEN: ${TRACEFLOW_SERVICE_TOKEN:?run make env}
     depends_on:
