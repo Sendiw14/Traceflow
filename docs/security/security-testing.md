@@ -16,7 +16,7 @@
 ## Third-party image findings (report-only, decision needed before release)
 | Image | Findings (fixable) | Location | Note |
 | --- | --- | --- | --- |
-| postgres:18.7 | 26 (25 HIGH, 1 CRITICAL CVE-2025-68121) | `usr/local/bin/gosu` (old Go stdlib) | gosu runs only at entrypoint to drop root; options: newer postgres patch image when published, or documented acceptance |
+| postgres:18.7 | 26 (25 HIGH, 1 CRITICAL CVE-2025-68121) | `usr/local/bin/gosu` (old Go stdlib) | still present in the 2026-11 upstream rebuild (digest c6993038, repinned M7). Options: accept (gosu only drops root at entrypoint) or switch to `postgres:18.7-alpine` (su-exec) before first production data — owner decision |
 | otel/opentelemetry-collector-contrib:0.165.0 | 1 HIGH | collector binary | upgrade with next Collector release after config re-validation |
 
 ## Not yet done

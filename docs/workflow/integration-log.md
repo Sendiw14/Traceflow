@@ -396,3 +396,6 @@ NOT TESTED: age encryption round trip (age not installed; owner decision); real 
 - **NOT TESTED:** the client-side-navigation scenario end to end (needs a real session and a working auth DB); covered by the direct data-layer test only.
 
 M6 CI: merge run 45493768418 failed (docs Collector copy drifted after 39ed815 — drift test working); fixed e605301. Run https://github.com/Sendiw14/Traceflow/actions/runs/45494165929 → all 5 jobs success; Trivy: traceflow-web 0 findings after npm removal, trace-api 0, lockfiles 0; Playwright 93/93 on runner. FINAL: PASS (M6 automated criteria). Third-party findings recorded in docs/security/security-testing.md.
+
+## M7 (Opus) — acceptance evidence
+README quickstart executed verbatim in CI (45495842392, all green). postgres:18.7 repinned to upstream rebuild c6993038 (gosu findings unchanged: 26 → owner decision). M7-PERF-02: 230,450 spans over 7 days; 0/5,397 errors after shm_size 256m (first run: 6 hidden 503s, SQLSTATE 53100). Release evidence drafted: readiness (C) integrated functionality; (D) blocked on owner actions.

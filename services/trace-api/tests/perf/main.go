@@ -44,6 +44,8 @@ var (
 	warmup         = flag.Duration("warmup", 30*time.Second, "query warmup excluded from stats")
 	vus            = flag.Int("vus", 10, "concurrent query workers")
 	seed           = flag.Uint64("seed", 20261122, "PRNG seed")
+	spread         = flag.Duration("spread", 0, "backdate trace starts uniformly over the past spread (e.g. 168h for 7-day windows); 0 = now")
+	mix            = flag.String("mix", "list", "query mix: list (trace list + detail) or aggregates (overview, services, dependencies, series, histogram)")
 )
 
 const spansPerTrace = 10
@@ -141,7 +143,11 @@ func main() {
 		<-tick.C
 		bySvc := map[string][]*tracepb.Span{}
 		for k := 0; k < tracesPerReq; k++ {
-			spans, tid := trace(r, n, time.Now().UnixNano())
+			start := time.Now().UnixNano()
+			if *spread > 0 {
+				start -= r.Int64N(int64(*spread))
+			}
+			spans, tid := trace(r, n, start)
 			n++
 			ids = append(ids, tid)
 			for svc, ss := range spans {
@@ -199,9 +205,17 @@ func main() {
 
 	// ---- query load
 	end := time.Now()
-	windowStart := begin.Add(-time.Minute).UnixNano()
+	windowStart := begin.Add(-time.Minute - *spread).UnixNano()
 	windowEnd := end.Add(time.Minute).UnixNano()
 	listLat, detailLat := &latencies{}, &latencies{}
+	aggNames := []string{"overview", "services", "dependencies", "server_latency", "latency_distribution"}
+	aggWindows := []time.Duration{time.Hour, 24 * time.Hour, 7 * 24 * time.Hour}
+	agg := map[string]*latencies{}
+	for _, a := range aggNames {
+		for _, w := range aggWindows {
+			agg[a+"_"+w.String()] = &latencies{}
+		}
+	}
 	qBegin := time.Now()
 	var qwg sync.WaitGroup
 	for v := 0; v < *vus; v++ {
@@ -224,6 +238,22 @@ func main() {
 			}
 			for time.Since(qBegin) < *warmup+*queryDuration {
 				measured := time.Since(qBegin) >= *warmup
+				if *mix == "aggregates" {
+					a := aggNames[rr.IntN(len(aggNames))]
+					w := aggWindows[rr.IntN(len(aggWindows))]
+					to := windowEnd
+					from := to - int64(w)
+					q := "from=" + strconv.FormatInt(from, 10) + "&to=" + strconv.FormatInt(to, 10)
+					path := map[string]string{
+						"overview": "/v1/overview?" + q, "services": "/v1/services?" + q, "dependencies": "/v1/dependencies?" + q,
+						"server_latency": "/v1/analytics/server-latency?bucket_seconds=3600&" + q, "latency_distribution": "/v1/analytics/latency-distribution?" + q,
+					}[a]
+					ok, d := get(path)
+					if measured {
+						agg[a+"_"+w.String()].add(d, ok)
+					}
+					continue
+				}
 				if rr.IntN(2) == 0 {
 					// random sub-window of the ingested range, random filter mix
 					span := windowEnd - windowStart
@@ -253,7 +283,17 @@ func main() {
 		}(v)
 	}
 	qwg.Wait()
-	report["query"] = map[string]any{"trace_list": listLat.report(), "trace_detail": detailLat.report()}
+	if *mix == "aggregates" {
+		out := map[string]any{}
+		for k, l := range agg {
+			out[k] = l.report()
+		}
+		report["query"] = out
+	} else {
+		report["query"] = map[string]any{"trace_list": listLat.report(), "trace_detail": detailLat.report()}
+	}
+	report["mix"] = *mix
+	report["spread"] = spread.String()
 	report["dataset"] = map[string]any{"traces": len(ids), "spans": len(ids) * spansPerTrace}
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")

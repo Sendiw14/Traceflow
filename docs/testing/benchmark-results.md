@@ -55,3 +55,20 @@ These spans carry only 2 short attributes; real instrumentation (≈15 attribute
 
 ### Not covered
 Reference Linux host; tuned PostgreSQL; Collector in path; 7-day query windows; >200-row UI rendering; memory/GC profile of trace-api; disk-IO saturation; sustained multi-hour profile.
+
+## M7-PERF-02 — aggregate endpoints under load, 1 h / 24 h / 7 d windows (2026-11-25)
+
+**Tool:** `tests/perf -mix aggregates -spread 168h -rate 2000 -ingest-duration 150s -vus 10 -query-duration 3m -warmup 0s` (every request counted). **Host:** same dev host; PostgreSQL 18.7 capped 4 CPU / 8 GB, `--shm-size 256m`; trace-api as `traceflow_app`.
+**Dataset:** 230,450 spans / 23,045 traces spread uniformly over the past 7 days (seeding achieved 1,532 spans/s; 230,450/230,450 accepted, 0 failed requests).
+
+| Endpoint | 1 h p95 | 24 h p95 | 7 d p95 | 7 d p99 | Errors |
+| --- | --- | --- | --- | --- | --- |
+| `/v1/overview` | 29 ms | 300 ms | **1,756 ms** | 2,895 ms | 0 |
+| `/v1/services` | 18 ms | 167 ms | 1,065 ms | 1,489 ms | 0 |
+| `/v1/dependencies` | 47 ms | 354 ms | **2,371 ms** | 2,739 ms | 0 |
+| `/v1/analytics/server-latency` (3600 s buckets) | 17 ms | 158 ms | 1,046 ms | 1,640 ms | 0 |
+| `/v1/analytics/latency-distribution` | 11 ms | 88 ms | 449 ms | 585 ms | 0 |
+| **All** (5,397 requests) | | | | | **0** |
+
+**Finding fixed:** the first run (default Docker `/dev/shm` 64 MB) produced 6 × `could not resize shared memory segment … No space left on device` (SQLSTATE 53100) → 503 during warmup, hidden from the measured stats. `compose.yaml` now sets `shm_size: 256m` (production already did); the re-run counted every request and had 0 errors.
+**Limitation (no spec target exists for aggregates):** 7-day overview/dependencies are 1.8–2.4 s p95 because they scan all SERVER spans in the window. Acceptable for occasional views; not for 5 s polling of a 7-day window. Candidate ADR: hourly rollup table for service stats and edges. UI should default to short windows and poll long windows slowly.

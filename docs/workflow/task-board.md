@@ -47,3 +47,7 @@
 | M6-OPEN web runtime image: drop bundled npm (6 HIGH via Trivy) | Sonnet | DONE (merged 18c82e0; node pinned by digest) | CI verifies |
 | M6-UI /login, sign-in on /app, auth at data source (call()), actor from session | Sonnet | DONE (merged; Opus review PASS: 106 unit, 93/93 e2e, signed-out operator-prod → /login, RSC request returns no data) | real GitHub NOT TESTED |
 | M6-GATE M6 exit review | Opus + owner | APPROVED by owner 2026-11-25 | carried into M7: security review, age, OAuth, image CVEs |
+| M7-001 README quickstart = CI clean-clone walkthrough | Opus | DONE (CI 45495842392) | |
+| M7-002 Aggregate + 7-day benchmark; shm_size fix | Opus | DONE | 7-day aggregates 1–2.4 s p95 → rollup ADR candidate |
+| M7-003 Release evidence table + owner action list | Opus | DRAFT (UI rows pending Sonnet M7-UI) | docs/testing/release-evidence.md |
+| M7-UI Lighthouse, screenshots 5 widths, keyboard/VoiceOver, visual review | Sonnet | IN PROGRESS | branch m7-ui |

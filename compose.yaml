@@ -12,6 +12,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:?set in .env}
     volumes:
       - pgdata:/var/lib/postgresql
+    # Docker's default 64 MB /dev/shm makes parallel queries fail (SQLSTATE 53100, M7-PERF-02).
+    shm_size: 256m
     networks: [data]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
