@@ -44,6 +44,7 @@ Statuses: PASS · FAIL · NOT TESTED · BLOCKED. Every PASS links to a repeatabl
 | Encrypted backup round trip (age) | **NOT TESTED** | age not installed (owner decision) |
 | Production-size restore time vs RTO 4 h | **NOT TESTED** | needs operator host |
 | operator-prod config (Caddy TLS, headers, only 80/443) | PASS (validated) / NOT TESTED (deployed) | `compose.production.yaml`, `caddy validate` |
+| Release pipeline (tag → gates → images → scan → SBOM → draft release) | PASS (dry run 45502243951) / tag path NOT TESTED | `.github/workflows/release.yml`, `docs/runbooks/release.md` |
 
 ## Performance (lab, dev host — not the reference host)
 

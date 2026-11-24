@@ -52,3 +52,4 @@
 | M7-003 Release evidence table + owner action list | Opus | DRAFT (UI rows pending Sonnet M7-UI) | docs/testing/release-evidence.md |
 | M7-UI Lighthouse, screenshots 5 widths, keyboard, visual review | Sonnet | DONE (merged; Opus re-ran 106 unit, 93/93 e2e) | open: VoiceOver, 50-node map, 11 routes unreviewed, non-Chromium; screenshots 14.8 MB in git |
 | M7-GATE M7 exit review | Opus + owner | APPROVED by owner 2026-11-25 at readiness (C) | owner actions open → M8 prerequisites |
+| M8-001 Release tooling: CHANGELOG, tag-driven release.yml (gates, build, Trivy, SBOM, GHCR push, draft release), runbook | Opus | DONE — dry run 45502243951 green (0 findings; push/release skipped as designed) | tag gate path NOT TESTED until the first real tag |

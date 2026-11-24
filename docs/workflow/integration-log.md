@@ -408,3 +408,12 @@ README quickstart executed verbatim in CI (45495842392, all green). postgres:18.
 - **NOT TESTED:** VoiceOver or any screen reader (not drivable by an agent; manual script in the matrix), 50-node map (no data; seeding proposal in the doc), Firefox/Safari, real devices, field Web Vitals, Lighthouse on private routes, visual inspection of the screenshots not listed as "seen" in §6, >200-row paging and 5 000-span traces.
 
 M7 CI: merge run https://github.com/Sendiw14/Traceflow/actions/runs/45500565202 on 3429e17 → all 5 jobs success. FINAL: PASS (M7 automated acceptance). Readiness (C) integrated functionality; (D) release candidate blocked on owner actions listed in docs/testing/release-evidence.md.
+
+## M8-001 — Release tooling
+
+```text
+FILES: CHANGELOG.md, .github/workflows/release.yml, docs/runbooks/release.md
+DRY RUN: https://github.com/Sendiw14/Traceflow/actions/runs/45502243951 (workflow_dispatch on 98dbc51) → success: build both images with OCI labels; Trivy traceflow-trace-api 0, traceflow-web 0 fixable CRITICAL/HIGH; SBOM artifact uploaded; gate/push/draft-release steps skipped (dry run); no release created
+LOCAL: actionlint clean; CHANGELOG section extraction, version-header gate and digest→.env line transform tested on sample input
+NOT TESTED: tag path (CI-success gate, GHCR push, draft release) — first exercised by the owner's first vX.Y.Z tag; GHCR package visibility is an owner setting
+```
