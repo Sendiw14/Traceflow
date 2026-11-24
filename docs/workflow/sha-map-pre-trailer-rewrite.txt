@@ -1,0 +1,80 @@
+# Commit SHA map: before -> after the 2026-11-26 history rewrite
+# The rewrite removed "Co-Authored-By: Claude" trailers so the repository owner is the only contributor.
+# File contents, authors and dates are identical; only commit messages and therefore SHAs changed.
+# Older docs (integration log, task board, ADRs) cite the "before" short SHAs.
+# old  new  subject
+b9ae4db 2f5c2fc docs: richer README with screenshots and architecture; owner-only attribution rule
+2ed0359 cb92b6f docs: release runbook; record release dry run (45502243951)
+98dbc51 41830b4 ci(release): tag-driven release pipeline with draft GitHub Release; CHANGELOG
+af13ab1 800594e docs: M7 gate approved at readiness (C)
+f575da6 1d4e260 docs: record green M7 CI run (45500565202)
+3429e17 c0f2ef4 merge: M7 UI acceptance evidence and four UI fixes (Sonnet, m7-ui)
+219407e 214bf71 docs: M7-UI handoff
+77f7651 24c9409 docs(test): UI acceptance evidence (Lighthouse lab, bundle, responsive screenshots, dense data, a11y, visual review) and tooling
+c3f5e49 1a5a409 fix(web): list markers in docs/onboarding/landing, trace inspector stacks below the waterfall under 1320 px (durations were clipped at 1024)
+0bdc38c 448b893 fix(web): map graph options were nested in an svg with implicit role=img (children presentational for AT); role=none exposes them to the listbox
+33dc65b 6626536 fix(web): panels no longer force page-level horizontal overflow at 768/1024 px (min-w-0 on grid children)
+d27656c 26ebc9c fix(web): docs nav no longer shifts layout on mobile (CLS 0.186 -> 0.000 in Lighthouse mobile lab run)
+8c7ec09 056c84f perf+docs: M7 aggregate/7-day benchmark, shm fix, release evidence draft
+4ebdc0c dbd157b docs+ci: README quickstart is the CI walkthrough; repin postgres:18.7
+abb22b1 2dfb5db docs: M6 security testing evidence, third-party image findings, gate ready
+e605301 f5beb4a docs(web): sync docs Collector config copy with infra/otel/collector.yaml
+a484bad 5e70fca merge: M6 sign-in UI, data-source authorization, slimmer web image (Sonnet, m6-ui)
+612e80e 2810ba4 fix(web): authorize at the data source, not the layout (redirect to /login or 404 from every read)
+18c82e0 d921a66 build(web): drop bundled npm from the runtime image, pin node:26-alpine by digest
+58c586a 6970d5e feat(web): /login, sign-in guard for /app, actions and data access, sign-out, actor from session, docs update
+39ed815 b4c99c4 feat(ops): operator-prod compose + Caddy, backup/restore, failure drills (M6-005/006)
+3304e81 22dc2cb ci(security): Trivy scan + CycloneDX SBOM; OTLP-19 SDK retry test
+19674cd 540c04f feat(security): operator authentication core with better-auth (M6-002)
+8055369 249ee3b feat(security): least-privilege DB roles and one-shot migrate job (M6-001)
+55ac0ba 8715c3b docs: record green M5b CI run (45458676153); M5 gate ready
+73713cd d2ddc23 merge: M5b public site, docs and /demo with profile gating (Sonnet, m5b-public)
+f37153f 0f525eb fix(web): second independent profile gate in layouts and server actions
+f422466 c241be1 feat(web): landing page, journey from real demo trace shapes, public-site tests (axe, 375px, reduced motion)
+9b7c06a 0d5d4d1 docs(web): /docs routes from repository sources with version banner, TOC and copy buttons
+21ae4f6 3b22a5b feat(web): site shell and /demo routes (synthetic, read-only) reusing the app components
+ac6ce5d dce5292 feat(web): server-side TRACEFLOW_PROFILE gating for /app and /demo, fail closed
+a3bbbe3 d367a92 docs: task board — M5b public routes in progress
+a906cf1 13da2f5 compose: pass TRACEFLOW_PROFILE to web (route gating per profile)
+3a7c76c c533165 docs: record green M5 CI run (45221698786)
+7b14221 dc52684 ci: run Playwright journeys against the real stack; ignore reviewed gitleaks false positive
+2fdfb3f a6b5ccd merge: M5 /app UI on the real query API (Sonnet, m5-ui)
+a6a4469 d7b397d test(web): Playwright journeys J-02/J-03/J-04, axe on every route, 375px reflow; fix axe findings
+1f5e4dd ad79924 docs(design): M5 consumer findings (openapi-consumer-review §6)
+17f873a 1703e70 feat(web): onboarding and settings routes; complete app nav
+b5ed4c8 9f91bee feat(web): services, service detail, dependency map and analytics routes
+3a49863 9180f0c feat(web): traces list and trace detail (waterfall, tree, table, inspector)
+5bfd07e 51d3185 feat(web): BFF data layer and /app overview on the real query API
+4173fd1 695a13f ci: wait per scenario trace in interop smoke (traffic service writes concurrently)
+9cd6ff1 428fe5f feat: M5 wiring — web gets trace-api env; local traffic generator
+34c94c0 fa91b0b docs: record green M4 CI run (45039390875)
+840697b caabe56 ci: probe real query API behaviour in compose smoke
+f4fa261 ae1754e feat: M4 query API, analytics and topology with contract tests
+224da1f c2b4423 docs: fix run reference in M3 log entry
+d965241 9758fd7 docs: record green M3 CI run (45035824037)
+05776f7 137b21f ci: isolate demo load results from build output in interop smoke
+bf50d91 ccb6c7e feat: M3 OTLP/HTTP ingest to PostgreSQL with demo system
+5dc31ff 79cd8cc docs: M2 gate evidence (CI run 45026370632 all green)
+796a4e2 8558031 fix(web): drop COPY of nonexistent apps/web/public from Dockerfile
+cc669ff ca2dd21 fix(web): install pnpm via npm in Dockerfile (no corepack on Node 25+)
+48b5817 425dc0b ci: build web image in Compose smoke; add Playwright
+8f8f176 dcf6c7f docs: record first green CI run (45017824146)
+8b8bb74 1286fe1 docs: M2-002 better-auth spike passes 24/24; finalize ADR-0005
+1bb3abb 4e1cb49 ci: add web job; accept ADR-0006 (TypeScript 6.0.3)
+42e54c0 a615d50 merge: M2 apps/web shell (Sonnet, m2-web-shell)
+661bd44 e7fb9c7 docs: M2-001b handoff results (Docker BLOCKED, rest PASS)
+709bb4e f544b20 merge: main into m2-web-shell
+4995670 b0cea00 build: add root .dockerignore for repo-root image builds
+c78aa9f 3ed5a3a fix(web): force-dynamic /app segment; fix lint warnings
+7989cb7 e0538b3 feat(web): M2 apps/web shell — Next 16, Tailwind 4 tokens, generated API client, tests
+8d6979c 3fc9bf2 feat: M2 foundation — trace-api skeleton, Compose, Collector, CI
+6747ee6 207e6ae docs: freeze M1 contracts at 1.0.0
+066190a 77e97a3 merge: M1 Sonnet design system, page matrix and OpenAPI consumer review
+20e2c3e 444509f docs: re-review OpenAPI 0.2.0-draft (APPROVED, non-blocking notes); update page-matrix bindings
+10cf0fe 58918e4 docs: M1 design system, page matrix, a11y/motion/asset specs and OpenAPI consumer review
+8d2f888 5f3b944 api: 0.2.1-draft folds Sonnet re-review notes N-1..N-6
+38e6112 f001d7b api: 0.2.0-draft addressing Sonnet consumer review
+de87bff ebe7805 docs: accept ADR-0005 conditional on M2 auth spike
+c474427 ac30741 docs: draft M1 backend contracts
+728292b d7a5e69 docs: record owner decisions on M0 blocking unknowns; add Apache-2.0
+06fd1e0 6abfd9f docs: adopt V2 spec and draft M0 discovery docs

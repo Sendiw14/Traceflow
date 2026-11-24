@@ -417,3 +417,7 @@ DRY RUN: https://github.com/Sendiw14/Traceflow/actions/runs/45502243951 (workflo
 LOCAL: actionlint clean; CHANGELOG section extraction, version-header gate and digest→.env line transform tested on sample input
 NOT TESTED: tag path (CI-success gate, GHCR push, draft release) — first exercised by the owner's first vX.Y.Z tag; GHCR package visibility is an owner setting
 ```
+
+## 2026-11-26 — History rewrite: owner is the only contributor
+
+Owner rule: no `Co-Authored-By: Claude` / Anthropic attribution anywhere. 73 of 74 commits carried a trailer, which listed `claude` as a GitHub contributor. All trailers were removed with `git filter-branch --msg-filter`. Verified: same number of commits (75 incl. this prep), identical tree, subject, author and committer dates for every commit, zero trailers left, single identity `68844943+Sendiw14@users.noreply.github.com`. Commit SHAs cited in earlier entries are pre-rewrite; see `sha-map-pre-trailer-rewrite.txt`. GitHub Actions run URLs are unchanged. Rule recorded in `CLAUDE.md`.
