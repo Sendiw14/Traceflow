@@ -1,5 +1,8 @@
 import "server-only";
 import { createTraceApiClient } from "@/lib/api/client";
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+import { loginUrl, safeNext } from "@/lib/login";
 import { requireAccess } from "./guard";
 import type { components } from "@/lib/api/generated/schema";
 
@@ -23,8 +26,6 @@ export function api() {
   return createTraceApiClient(url, token);
 }
 
-const UNAUTHORIZED: ApiProblem = { status: 401, code: "unauthorized", title: "Sign-in required" };
-const FORBIDDEN: ApiProblem = { status: 403, code: "forbidden", title: "Not available in this deployment" };
 const NOT_CONFIGURED: ApiProblem = {
   status: 503, code: "storage_unavailable", title: "TRACEFLOW is not configured",
   detail: "TRACE_API_URL and TRACEFLOW_SERVICE_TOKEN must be set for the web service.",
@@ -34,9 +35,13 @@ interface Raw<T> { data?: T; error?: unknown; response: Response }
 
 /** Normalises openapi-fetch results and network failures into Result<T>; never throws. */
 export async function call<T>(fn: (c: NonNullable<ReturnType<typeof api>>) => Promise<Raw<T>>): Promise<Result<T>> {
-  // Backstop for layouts (which do not re-run on client navigation): no operator, no data. Shared reads stay open in public-demo.
+  // Authorization lives at the data source: layouts do not re-run on client-side navigation, so every trace-api
+  // read checks identity itself. No operator → redirect to sign-in; profile not served → 404. Shared reads stay open in public-demo.
   const access = await requireAccess(null);
-  if (!access.ok) return { ok: false, error: access.code === "unauthorized" ? UNAUTHORIZED : FORBIDDEN };
+  if (!access.ok) {
+    if (access.code === "forbidden") notFound();
+    redirect(loginUrl(safeNext((await headers()).get("x-tf-path") ?? "/app"), "expired"));
+  }
   const c = api();
   if (!c) return { ok: false, error: NOT_CONFIGURED };
   try {

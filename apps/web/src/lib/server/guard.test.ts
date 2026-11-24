@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
+vi.mock("next/headers", () => ({ headers: async () => new Headers({ "x-tf-path": "/app/traces?range=6h" }) }));
 vi.mock("react", async (orig) => ({ ...(await orig<typeof import("react")>()), cache: <T,>(fn: T) => fn }));
 const getOperator = vi.fn();
 const currentAuthMode = vi.fn();
@@ -87,13 +88,38 @@ describe("server actions and data access refuse without an operator", () => {
     await fetchSpan(TRACE, "0123456789abcdef");
     expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
-  it("the data layer is a backstop: any trace-api read is refused without an operator", async () => {
+  it("data layer: no operator → redirect to /login (path kept), and trace-api is never contacted", async () => {
     vi.stubEnv("TRACEFLOW_PROFILE", "operator-prod");
     currentAuthMode.mockReturnValue(GITHUB);
-    getOperator.mockResolvedValue(null);
-    const { getOverview } = await import("./data");
-    const r = await getOverview(1n, 2n);
-    expect(r).toMatchObject({ ok: false, error: { code: "unauthorized", status: 401 } });
+    getOperator.mockResolvedValue(null); // e.g. session expired or removed from the allowlist
+    const d = await import("./data");
+    const calls = [
+      () => d.getOverview(1n, 2n), () => d.listTraces({ from: 1n, to: 2n }), () => d.getTrace(TRACE, "full"), () => d.getSpan(TRACE, "0123456789abcdef"),
+      () => d.listServices(1n, 2n), () => d.getService("orders", 1n, 2n), () => d.getDependencies(1n, 2n), () => d.getSettings(),
+      () => d.getIngestionStatus(1n, 2n), () => d.getServerLatency({ from: 1n, to: 2n, bucketSeconds: 60 }), () => d.getLatencyDistribution({ from: 1n, to: 2n }),
+    ];
+    for (const fn of calls) {
+      const err = await fn().then(() => null, (e: { digest?: string }) => e);
+      expect(String(err?.digest), fn.toString()).toMatch(/^NEXT_REDIRECT;replace;\/login\?next=%2Fapp%2Ftraces%3Frange%3D6h&reason=expired;/);
+    }
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+  it("data layer: auth backend failure also redirects (fail closed); disallowed profile is a 404", async () => {
+    vi.stubEnv("TRACEFLOW_PROFILE", "operator-prod");
+    currentAuthMode.mockReturnValue(GITHUB);
+    getOperator.mockRejectedValue(new Error("auth db unreachable"));
+    const d = await import("./data");
+    expect(String(((await d.getOverview(1n, 2n).then(() => null, (e) => e)) as { digest?: string }).digest)).toMatch(/^NEXT_REDIRECT/);
+    vi.stubEnv("TRACEFLOW_PROFILE", "");
+    expect(String(((await d.getOverview(1n, 2n).then(() => null, (e) => e)) as { digest?: string }).digest)).toMatch(/NEXT_HTTP_ERROR_FALLBACK;404|NEXT_NOT_FOUND/);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+  it("data layer: a signed-in operator reaches trace-api", async () => {
+    vi.stubEnv("TRACEFLOW_PROFILE", "operator-prod");
+    currentAuthMode.mockReturnValue(GITHUB);
+    getOperator.mockResolvedValue({ githubId: "1", kind: "github" });
+    const { getOverview } = await import("./data");
+    await getOverview(1n, 2n);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 });
