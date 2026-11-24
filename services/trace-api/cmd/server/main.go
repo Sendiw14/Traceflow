@@ -33,6 +33,14 @@ func main() {
 		os.Exit(healthcheck())
 	}
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	// `trace-api migrate`: one-shot job run with admin credentials before the runtime starts.
+	if len(os.Args) > 1 && os.Args[1] == "migrate" {
+		if err := migrate(log); err != nil {
+			log.Error("migrate failed", "err", err)
+			os.Exit(1)
+		}
+		return
+	}
 	if err := run(log); err != nil {
 		log.Error("trace-api exited", "err", err)
 		os.Exit(1)
@@ -54,6 +62,28 @@ func newQueryHandler(cfg config.Config, db ops.Pinger, routes func(*http.ServeMu
 	mux.Handle("GET /readyz", ops.Readiness(db))
 	mux.Handle("/", authz.RequireServiceToken(cfg.ServiceToken, api))
 	return mux
+}
+
+func migrate(log *slog.Logger) error {
+	url := os.Getenv("TRACEFLOW_MIGRATE_DATABASE_URL")
+	if url == "" {
+		return errors.New("TRACEFLOW_MIGRATE_DATABASE_URL is required")
+	}
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, url)
+	if err != nil {
+		return errors.New("invalid TRACEFLOW_MIGRATE_DATABASE_URL")
+	}
+	defer pool.Close()
+	if err := db.Migrate(pool); err != nil {
+		return err
+	}
+	pw := db.RolePasswords{App: os.Getenv("TRACEFLOW_APP_DB_PASSWORD"), ReadOnly: os.Getenv("TRACEFLOW_RO_DB_PASSWORD"), Auth: os.Getenv("TRACEFLOW_AUTH_DB_PASSWORD")}
+	if err := db.EnsureRoles(ctx, pool, pw); err != nil {
+		return err
+	}
+	log.Info("migrations applied and roles ensured")
+	return nil
 }
 
 func healthcheck() int {
@@ -92,14 +122,9 @@ func run(log *slog.Logger) error {
 	}
 	defer pool.Close()
 
-	// public-demo runs read-only against a pre-seeded database (deployment-topology.md).
-	// shortcut: runtime role applies migrations in local-dev/operator-prod; split into a
-	// migrate role and one-shot job at M6 (data-model.md DB roles).
-	if cfg.Profile != config.ProfilePublicDemo {
-		if err := db.Migrate(pool); err != nil {
-			return err
-		}
-		log.Info("migrations applied")
+	// The runtime role has no DDL rights; schema changes come only from `trace-api migrate`.
+	if err := db.CheckMigrated(ctx, pool); err != nil {
+		return err
 	}
 
 	limits := query.Limits{

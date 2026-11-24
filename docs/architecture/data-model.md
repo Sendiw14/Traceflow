@@ -150,8 +150,13 @@ CREATE TABLE schema_info (version integer NOT NULL, applied_at timestamptz NOT N
 ## Retention
 Configurable days (`settings.retention_days`). Job deletes `trace_summaries` whose `last_received_at` < cutoff, and their spans, in bounded batches (e.g. 5,000 traces/batch) with pause between; records results in ops metrics. Partitioning by day deferred until capacity profile shows need (ADR required).
 
-## DB roles
-`traceflow_migrate` (DDL), `traceflow_rw` (ingest + query + retention), `traceflow_ro` (SELECT only; public-demo runtime). Auth schema has its own role (ADR-0005).
+## DB roles (implemented M6)
+- **Superuser** (`POSTGRES_USER`): used only by the one-shot `trace-api migrate` job (Compose service `migrate`), which applies goose migrations and then `db.EnsureRoles`.
+- **`traceflow_app`**: trace-api runtime. SELECT/INSERT/UPDATE/DELETE on trace tables and sequence usage; **no DDL** (CREATE/DROP/ALTER/TRUNCATE refused, SQLSTATE 42501). trace-api refuses to start if the schema is missing (`db.CheckMigrated`).
+- **`traceflow_ro`**: public-demo runtime. SELECT only; no access to `goose_db_version`.
+- **`traceflow_auth`**: web auth sessions. Owns the **separate database `traceflow_auth`**; cannot connect to the trace database, and the app/ro roles cannot connect to the auth database.
+- `PUBLIC` has no CONNECT on either database and no CREATE on `public`.
+Proof: `internal/store/roles_integration_test.go`. Passwords come from `.env` (`make env` generates 64-hex values).
 
 ## Reject reason codes
 Stable codes counted in `ingestion_records.reject_reasons` and exposed as `RejectReason` in the API: `invalid_id`, `invalid_timestamp` (zero, > int64, or unparseable), `invalid_span` (other structural faults), `conflicting_replay`, `trace_span_limit`. Adding a code is an API change.

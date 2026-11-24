@@ -37,4 +37,5 @@
 | M5-UI All /app routes on real API, states, BFF, Playwright J-02/J-03/J-04, axe | Sonnet | DONE (merged; Opus re-ran: web checks PASS, 54 unit, 32/32 e2e) | C-1 actor sentinel must be replaced in M6 |
 | M5-OPEN Public site, docs, /login, /demo routes; API C-2/C-3/C-6 additive changes | Sonnet / Opus | TODO | |
 | M5b Public site, docs, /demo, profile gating (no /login until M6) | Sonnet | DONE (merged; Opus re-ran: 72 unit, 84/84 e2e, gating per profile incl. bypass header) | M6: shared read actions need session check in operator-prod |
-| M5-GATE M5 exit review | Opus + owner | READY FOR OWNER | all V1 routes except /login; real-API journeys green in CI |
+| M5-GATE M5 exit review | Opus + owner | APPROVED by owner 2026-11-25 | /login moves to M6 with sign-in |
+| M6-001 DB roles: migrate job (superuser), traceflow_app (no DDL), traceflow_ro, traceflow_auth + separate auth DB | Opus | DONE (local + integration test) | `.env` regenerated: old local .env must be moved aside and `make env` re-run |

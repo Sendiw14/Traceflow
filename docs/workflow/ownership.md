@@ -10,5 +10,7 @@ One modifying owner per file. Reviewers are read-only.
 | `docs/security/` | Opus | Independent security reviewer + owner |
 | `docs/design/**`, `apps/web/**` (UI, components, pages, tests) | Sonnet | Opus (data semantics), a11y reviewer |
 | `apps/web/src/lib/api/generated/**` | generated — nobody edits | CI diff check |
+| `apps/web/src/lib/auth/**`, `apps/web/src/app/api/auth/**` (M6, ADR-0005) | Opus | Sonnet (integration), owner (high-risk security) |
+| `/login` page UI, session checks wired into `/app` layouts and server actions | Sonnet | Opus (security review) |
 | `examples/demo-system/**`, `compose*.yaml`, `infra/caddy/`, `Makefile` | Opus | correctness/security reviewer |
 | `docs/testing/` | Opus (backend), Sonnet (frontend sections) — separate files | each other |

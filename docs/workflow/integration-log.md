@@ -325,3 +325,17 @@ M5 CI: merge run 45210771702 failed (web: e2e had no stack; secrets: gitleaks fa
 - **Honest limit:** the Playwright header test cannot by itself prove layer 2 (the proxy also answers 404 there); the unit test is the proof that each layout/action refuses without the proxy. Server Action POSTs against a real gated server with a valid action ID are NOT TESTED end to end.
 
 M5b CI: run https://github.com/Sendiw14/Traceflow/actions/runs/45458676153 on 73713cd → go, contracts, web, secrets, compose-smoke all success; Playwright 84/84 against the real stack on the GitHub runner. FINAL: PASS (M5 complete except /login, which lands with sign-in in M6).
+
+## M6-001 — Least-privilege database roles
+
+```text
+TASK_ID: M6-001 | BASE: 55ac0ba | BRANCH: main
+REQUIREMENT_IDS: NFR-03, T-14 (threat model), data-model "DB roles"
+FILES: services/trace-api/{db/roles.go, cmd/server/main.go (migrate subcommand; runtime CheckMigrated), internal/store/roles_integration_test.go}, compose.yaml (migrate service; runtime URL as traceflow_app), .env.example, Makefile (`make env` fills all secrets without rm), docs
+RESULTS:
+  TestDatabaseRolesLeastPrivilege → PASS: app DML ok, CREATE/DROP/ALTER/TRUNCATE → 42501; ro SELECT only, no goose table; auth role cannot connect to trace DB; app cannot connect to auth DB; EnsureRoles idempotent
+  make env in clean dir → 5 distinct 64-hex secrets; second run refuses to overwrite
+  live local stack: migrate job exit 0 ("migrations applied and roles ensured"); trace-api sessions = traceflow_app only; ingest and query API working
+UPGRADE NOTE: existing local .env lacks the new secrets → move it aside, `make env`, and (to keep an existing pgdata volume) copy the old POSTGRES_PASSWORD back
+FINAL: PASS (local) — CI pending
+```

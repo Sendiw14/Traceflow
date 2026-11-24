@@ -1,10 +1,15 @@
 .PHONY: env up down ps logs test lint build check
 
-# Create .env from the template with a fresh random service token. Never overwrites.
+SECRETS := POSTGRES_PASSWORD TRACEFLOW_APP_DB_PASSWORD TRACEFLOW_RO_DB_PASSWORD TRACEFLOW_AUTH_DB_PASSWORD TRACEFLOW_SERVICE_TOKEN
+
+# Create .env from the template, filling every empty secret with fresh random hex. Never overwrites.
 env:
-	@test ! -f .env || { echo ".env exists; not overwriting"; exit 0; }; \
-	sed "s/^TRACEFLOW_SERVICE_TOKEN=$$/TRACEFLOW_SERVICE_TOKEN=$$(openssl rand -hex 32)/" .env.example > .env && \
-	echo "wrote .env"
+	@test ! -f .env || { echo ".env exists; not overwriting (move it aside to regenerate local secrets)"; exit 0; }; \
+	while IFS= read -r line; do \
+	  k=$${line%%=*}; \
+	  case " $(SECRETS) " in *" $$k "*) [ "$${line#*=}" = "" ] && line="$$k=$$(openssl rand -hex 32)";; esac; \
+	  printf '%s\n' "$$line"; \
+	done < .env.example > .env && echo "wrote .env"
 
 up:
 	docker compose up -d --build --wait
