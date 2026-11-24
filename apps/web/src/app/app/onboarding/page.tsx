@@ -74,7 +74,7 @@ export default async function OnboardingPage() {
       </Panel>
 
       <Panel title="Quickstart" id="quick" className="mb-4" testId="onboarding.quickstart">
-        <ol className="m-0 space-y-2 pl-5 text-sm">
+        <ol className="m-0 list-decimal space-y-2 pl-5 text-sm">
           <li>Start TRACEFLOW: <code className="mono">make env &amp;&amp; make up</code> in the repository root.</li>
           <li>Point your application&apos;s OpenTelemetry SDK at an OpenTelemetry Collector (OTLP/HTTP, port 4318) using the configuration below.</li>
           <li>Send a request through your application. A trace should appear here within a few seconds.</li>
@@ -89,7 +89,7 @@ export default async function OnboardingPage() {
       </Panel>
 
       <Panel title="Troubleshooting" id="trouble" testId="onboarding.troubleshooting">
-        <ul className="m-0 space-y-1 pl-5 text-sm">
+        <ul className="m-0 list-disc space-y-1 pl-5 text-sm">
           <li><strong>Still “No data yet”:</strong> check the Collector logs for export errors and that the exporter points at port 4318 of trace-api.</li>
           <li><strong>HTTP 4xx in the request counts:</strong> the payload was refused (size limit or malformed Protobuf). Limits are listed in <Link href="/app/settings">Settings</Link>.</li>
           <li><strong>Traces look incomplete:</strong> missing parent spans usually mean an uninstrumented hop or head-based sampling; TRACEFLOW does not reconstruct dropped spans.</li>

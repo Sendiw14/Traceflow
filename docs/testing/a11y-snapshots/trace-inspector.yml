@@ -1,0 +1,31 @@
+- complementary "GET /checkout":
+  - heading "GET /checkout" [level=2]
+  - button "Close"
+  - paragraph: "status: error kind: server service: gateway"
+  - paragraph: "Status message: Bad Gateway"
+  - term: Span ID
+  - definition:
+    - text: 3e60eabe08b9bff3
+    - button "Copy span ID"
+    - status
+  - term: Parent
+  - definition: none (root)
+  - term: Start
+  - definition: 2026-11-24 22:09:08.046 UTC
+  - term: End
+  - definition: 2026-11-24 22:09:08.070 UTC
+  - term: Duration
+  - definition: 24.3 ms
+  - term: Scope
+  - definition: traceflow-demo/gateway
+  - group: Resource attributes (2)
+  - group:
+    - text: Attributes (3)
+    - term: http.request.method
+    - definition: GET
+    - term: url.path
+    - definition: /checkout
+    - term: http.response.status_code
+    - definition: "502"
+  - group: Events (0)
+  - group: Links (0)

@@ -20,6 +20,7 @@ Statuses: PASS · FAIL · NOT TESTED · BLOCKED. Every PASS links to a repeatabl
 | UX | AC-UX-01: every V1 route with real data + all states; no phantom links | PASS (automated) | Playwright 93/93 in CI; page matrix |
 | UX | J-01 clean clone → trace found | PASS (CI 45495842392) | compose-smoke runs README quickstart verbatim (`scripts/readme-quickstart.sh`); Playwright J-02 finds the slow span |
 | UX | J-02/J-03/J-04 journeys (slow span, error span by keyboard, map → trace) | PASS (automated) | Playwright journeys in CI |
+| UX | Dense data: 200-row trace list (sort repaint 34 ms; 115 ms at 4× CPU), map 3 nodes | PASS (lab) / 50-node map NOT TESTED | `ui-acceptance.md` §4 |
 | UX | Usability sessions with 3 participants (spec §1.3, §16.3) | **NOT TESTED** | owner action |
 
 ## Security
@@ -52,7 +53,7 @@ Statuses: PASS · FAIL · NOT TESTED · BLOCKED. Every PASS links to a repeatabl
 | PERF-01 list p95 < 500 ms, detail p95 < 1 s, errors < 1 % | PASS (dev host) | same |
 | Aggregates under load incl. 7-day windows | PASS (0 errors / 5,397) with limitation: 7-day overview p95 1.8 s, dependencies 2.4 s | `benchmark-results.md` M7-PERF-02; shm finding fixed |
 | Reference 4 vCPU / 8 GB Linux host | **NOT TESTED** | owner provides host |
-| Public routes LCP ≤ 2.5 s, CLS ≤ 0.1 (lab) | _pending Sonnet M7-UI_ | |
+| Public routes LCP ≤ 2.5 s, CLS ≤ 0.1 (lab) | PASS (lab, dev host): mobile LCP 2.04–2.25 s, CLS 0, scores 98–100; desktop LCP ≤ 0.58 s | `ui-acceptance.md` §1 (Lighthouse 12.8.2) |
 
 ## Accessibility and responsive
 
@@ -60,7 +61,7 @@ Statuses: PASS · FAIL · NOT TESTED · BLOCKED. Every PASS links to a repeatabl
 | --- | --- | --- |
 | axe: no violations on every route (automated) | PASS | Playwright axe suite in CI |
 | 375 px no horizontal page overflow | PASS (automated) | Playwright reflow |
-| 360/768/1024/1440 + 200 % zoom screenshots; keyboard + screen-reader passes | _pending Sonnet M7-UI_ | |
+| 360/768/1024/1440 + 200 % zoom screenshots; keyboard + screen-reader passes | PARTIAL: 104 screenshots; keyboard pass J-02/03/04 done; 4 defects fixed; VoiceOver NOT TESTED; 11 routes screenshotted but not visually reviewed; non-Chromium NOT TESTED | `ui-acceptance.md`, `accessibility-matrix.md` §M7 |
 | WCAG 2.2 AA conformance claim | **NOT CLAIMED** | needs manual expert review |
 
 ## Owner actions required before (D) release candidate

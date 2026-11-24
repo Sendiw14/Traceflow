@@ -36,5 +36,5 @@ test("375 px: demo trace page and the docs menu disclosure", async ({ page }) =>
   const menu = page.getByTestId("docs.nav-details");
   await expect(menu).not.toHaveAttribute("open", "");
   await menu.locator("summary").click();
-  await expect(page.getByTestId("docs.nav").getByRole("link", { name: "Security" })).toBeVisible();
+  await expect(page.getByTestId("docs.nav-mobile").getByRole("link", { name: "Security" })).toBeVisible();
 });

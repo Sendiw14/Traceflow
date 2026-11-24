@@ -150,7 +150,7 @@ export function TraceView({ traceBase, traceId, spans, resources, scopes, detail
         )}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-4 min-[1320px]:grid-cols-[minmax(0,1fr)_380px]">
         <div className="min-w-0 rounded-lg border border-line bg-paper p-2">
           {view === "table" ? (
             <SortableTable caption="Spans" columns={tableCols} rows={spans} rowKey={(s) => s.span_id} testId="trace.table" rowTestId="trace.table.row" />

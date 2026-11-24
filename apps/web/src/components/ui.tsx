@@ -16,7 +16,7 @@ export function PageHeader({ title, children, testId }: { title: string; childre
 export function Panel({ title, id, children, className = "", testId }: { title?: string; id?: string; children: ReactNode; className?: string; testId?: string }) {
   const hid = id ? `${id}-h` : undefined;
   return (
-    <section aria-labelledby={hid} className={`rounded-lg border border-line bg-paper p-4 ${className}`} data-testid={testId}>
+    <section aria-labelledby={hid} className={`min-w-0 rounded-lg border border-line bg-paper p-4 ${className}`} data-testid={testId}>
       {title && <h2 id={hid} className="mb-3 text-base font-semibold">{title}</h2>}
       {children}
     </section>

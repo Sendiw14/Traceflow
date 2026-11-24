@@ -1,0 +1,74 @@
+- table "Observed cross-service parent→child edges · sorted within loaded rows":
+  - caption: Observed cross-service parent→child edges · sorted within loaded rows
+  - rowgroup:
+    - row "Source Target Basis Traces Pairs Errors First seen Last seen Sample traces":
+      - columnheader "Source":
+        - button "Source"
+      - columnheader "Target":
+        - button "Target"
+      - columnheader "Basis":
+        - button "Basis"
+      - columnheader "Traces":
+        - button "Traces"
+      - columnheader "Pairs":
+        - button "Pairs"
+      - columnheader "Errors":
+        - button "Errors"
+      - columnheader "First seen":
+        - button "First seen"
+      - columnheader "Last seen":
+        - button "Last seen"
+      - columnheader "Sample traces"
+  - rowgroup:
+    - row "Select edge gateway to orders orders client→server (verified) 1,130 1,130 226 2026-11-24 21:09:20 UTC 2026-11-24 22:09:08 UTC Sample trace 80b33584 Sample trace 0d3232c2 Sample trace b386036a Sample trace d6ba1852 Sample trace b246c8c6":
+      - cell "Select edge gateway to orders":
+        - button "Select edge gateway to orders": gateway
+      - cell "orders"
+      - cell "client→server (verified)"
+      - cell "1,130"
+      - cell "1,130"
+      - cell "226"
+      - cell "2026-11-24 21:09:20 UTC"
+      - cell "2026-11-24 22:09:08 UTC"
+      - cell "Sample trace 80b33584 Sample trace 0d3232c2 Sample trace b386036a Sample trace d6ba1852 Sample trace b246c8c6":
+        - link "Sample trace 80b33584":
+          - /url: /app/traces/80b335844e21f392543793461dddf234
+          - text: 80b33584
+        - link "Sample trace 0d3232c2":
+          - /url: /app/traces/0d3232c21450a83f5411d46009ab6749
+          - text: 0d3232c2
+        - link "Sample trace b386036a":
+          - /url: /app/traces/b386036afa5396066763f4003b7de0fc
+          - text: b386036a
+        - link "Sample trace d6ba1852":
+          - /url: /app/traces/d6ba185282d4611a5fb9318cb63d2584
+          - text: d6ba1852
+        - link "Sample trace b246c8c6":
+          - /url: /app/traces/b246c8c6790c851595fa885779cec36d
+          - text: b246c8c6
+    - row "Select edge orders to inventory inventory client→server (verified) 1,130 1,356 226 2026-11-24 21:09:20 UTC 2026-11-24 22:09:08 UTC Sample trace 80b33584 Sample trace 0d3232c2 Sample trace b386036a Sample trace d6ba1852 Sample trace b246c8c6":
+      - cell "Select edge orders to inventory":
+        - button "Select edge orders to inventory": orders
+      - cell "inventory"
+      - cell "client→server (verified)"
+      - cell "1,130"
+      - cell "1,356"
+      - cell "226"
+      - cell "2026-11-24 21:09:20 UTC"
+      - cell "2026-11-24 22:09:08 UTC"
+      - cell "Sample trace 80b33584 Sample trace 0d3232c2 Sample trace b386036a Sample trace d6ba1852 Sample trace b246c8c6":
+        - link "Sample trace 80b33584":
+          - /url: /app/traces/80b335844e21f392543793461dddf234
+          - text: 80b33584
+        - link "Sample trace 0d3232c2":
+          - /url: /app/traces/0d3232c21450a83f5411d46009ab6749
+          - text: 0d3232c2
+        - link "Sample trace b386036a":
+          - /url: /app/traces/b386036afa5396066763f4003b7de0fc
+          - text: b386036a
+        - link "Sample trace d6ba1852":
+          - /url: /app/traces/d6ba185282d4611a5fb9318cb63d2584
+          - text: d6ba1852
+        - link "Sample trace b246c8c6":
+          - /url: /app/traces/b246c8c6790c851595fa885779cec36d
+          - text: b246c8c6

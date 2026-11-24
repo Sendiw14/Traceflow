@@ -1,0 +1,7 @@
+- tree "Spans of trace b386036afa5396066763f4003b7de0fc":
+  - treeitem "error GET /checkout gateway 24.3 ms" [expanded] [level=1] [selected]
+  - treeitem "error GET gateway 24.2 ms" [expanded] [level=2]
+  - treeitem "error GET /orders orders 22.4 ms" [expanded] [level=3]
+  - treeitem "error GET orders 22.3 ms" [expanded] [level=4]
+  - treeitem "error GET /stock inventory 20.3 ms" [expanded] [level=5]
+  - treeitem "SELECT stock inventory 20.2 ms" [level=6]
