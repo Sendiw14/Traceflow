@@ -1,0 +1,135 @@
+# TRACEFLOW operator-prod: single server, private telemetry, GitHub sign-in.
+# Standalone file:  docker compose -f compose.production.yaml --env-file .env.production up -d --wait
+# Only Caddy publishes ports (80/443). Everything else is on internal networks.
+# No demo services, no traffic generator. Remote OTLP ingest is OFF: instrumented
+# services must join the `ingest` network on this host (see docs/runbooks/deployment.md).
+name: traceflow-prod
+
+services:
+  postgres:
+    image: postgres:18.7@sha256:eb63372c1e05c755f55fa30cbd07aecc443676fc6c0fa90b9002d01537841e1a
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set in .env.production}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env.production}
+      POSTGRES_DB: ${POSTGRES_DB:?set in .env.production}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    networks: [data, auth]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    shm_size: 256m
+    restart: unless-stopped
+    logging: &logs
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  migrate:
+    image: ${TRACEFLOW_TRACE_API_IMAGE:?set in .env.production (pinned release tag or digest)}
+    command: ["migrate"]
+    environment:
+      TRACEFLOW_MIGRATE_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      TRACEFLOW_APP_DB_PASSWORD: ${TRACEFLOW_APP_DB_PASSWORD:?set in .env.production}
+      TRACEFLOW_RO_DB_PASSWORD: ${TRACEFLOW_RO_DB_PASSWORD:?set in .env.production}
+      TRACEFLOW_AUTH_DB_PASSWORD: ${TRACEFLOW_AUTH_DB_PASSWORD:?set in .env.production}
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [data]
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    restart: "no"
+    logging: *logs
+
+  trace-api:
+    image: ${TRACEFLOW_TRACE_API_IMAGE}
+    environment:
+      TRACEFLOW_PROFILE: operator-prod
+      TRACEFLOW_DATABASE_URL: postgres://traceflow_app:${TRACEFLOW_APP_DB_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable
+      TRACEFLOW_SERVICE_TOKEN: ${TRACEFLOW_SERVICE_TOKEN:?set in .env.production}
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    networks: [app, ingest, data]
+    healthcheck:
+      test: ["CMD", "/trace-api", "healthcheck"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    deploy: { resources: { limits: { cpus: "2", memory: 1g } } }
+    restart: unless-stopped
+    logging: *logs
+
+  web:
+    image: ${TRACEFLOW_WEB_IMAGE:?set in .env.production (pinned release tag or digest)}
+    environment:
+      TRACEFLOW_PROFILE: operator-prod
+      TRACE_API_URL: http://trace-api:8080
+      TRACEFLOW_SERVICE_TOKEN: ${TRACEFLOW_SERVICE_TOKEN}
+      TRACEFLOW_PUBLIC_URL: https://${TRACEFLOW_DOMAIN:?set in .env.production}
+      TRACEFLOW_AUTH_SECRET: ${TRACEFLOW_AUTH_SECRET:?set in .env.production}
+      TRACEFLOW_AUTH_DATABASE_URL: postgres://traceflow_auth:${TRACEFLOW_AUTH_DB_PASSWORD}@postgres:5432/traceflow_auth?sslmode=disable
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:?set in .env.production}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:?set in .env.production}
+      TRACEFLOW_OPERATOR_GITHUB_IDS: ${TRACEFLOW_OPERATOR_GITHUB_IDS:?set in .env.production (numeric GitHub user IDs)}
+    depends_on:
+      trace-api: { condition: service_healthy }
+    # `auth` reaches only the separate auth database (traceflow_auth role cannot connect to trace data).
+    networks: [edge, app, auth]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    deploy: { resources: { limits: { cpus: "1", memory: 768m } } }
+    restart: unless-stopped
+    logging: *logs
+
+  collector:
+    image: otel/opentelemetry-collector-contrib:0.165.0@sha256:e40d61f10c9a617cca1ffd1be4d7e2b3a4b0f0001798ff07e58cabe82e618cea
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./infra/otel/collector.yaml:/etc/otelcol/config.yaml:ro
+    networks: [ingest]
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    deploy: { resources: { limits: { cpus: "1", memory: 512m } } }
+    restart: unless-stopped
+    logging: *logs
+
+  caddy:
+    image: caddy:2.11.9-alpine@sha256:003a97808e781aa9f7e75cc2f43d34d461099031faf5e20faefb9f61126836f0
+    environment:
+      TRACEFLOW_DOMAIN: ${TRACEFLOW_DOMAIN}
+      TRACEFLOW_ACME_EMAIL: ${TRACEFLOW_ACME_EMAIL:?set in .env.production}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web: { condition: service_healthy }
+    networks: [edge]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+    logging: *logs
+
+networks:
+  edge: {}
+  app: { internal: true }
+  ingest: { internal: true }
+  data: { internal: true }
+  auth: { internal: true }
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

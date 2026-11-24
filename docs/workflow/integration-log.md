@@ -365,3 +365,16 @@ M6-003: CI compose-smoke runs Trivy 0.76.2 (digest-pinned): images traceflow-{tr
   image scans NOT TESTED locally (local Docker builds blocked) — first run in CI
 M6-004: TestOTLP19ReferenceSDKRetriesOn503 → PASS: otlptracehttp v1.47.0 direct to receiver; storage fails twice → 503 Retry-After 5 ×2, then 200; 3 attempts, 1 span stored; elapsed ≥ 9 s proves Retry-After honoured over 50 ms backoff
 ```
+
+## M6-005/006 — Failure drills, operator-prod config, restore drill
+
+```text
+BASE: 3304e81
+CI 45465016011: go, contracts, web, secrets success; compose-smoke FAIL at Trivy (intended gate): 6 fixable HIGH in node:26-alpine's bundled npm (undici 6.28.0, brace-expansion 5.0.9) inside the web runtime image → fix queued to Sonnet (Dockerfile owner); trace-api image and all lockfiles clean
+Drills (local): PG stop 31 s → 30/30 traces stored, Collector sent 192, failed 0, enqueue-failed 0; trace-api stop 31 s → 30/30, sent 224, failed 0; Collector restart → 20/20; details docs/testing/failure-drills.md
+compose.production.yaml: docker compose config OK; only caddy publishes 80/443; app/ingest/data/auth internal; web on edge+app+auth only
+Caddyfile (caddy 2.11.9-alpine, digest-pinned): `caddy validate` → Valid configuration
+scripts/backup.sh, scripts/restore.sh: shellcheck clean; restore rejects unsafe DB names
+Restore drill: first attempt FAILED (pg_restore: role "traceflow_app" does not exist) → --no-privileges → PASS: 8/8 tables counts match (24,121 spans), migrate recreated roles, app role reads data; dump <1 s, restore+migrate 3 s
+NOT TESTED: age encryption round trip (age not installed; owner decision); real TLS/ACME; production-size restore time; deployment to a real host
+```

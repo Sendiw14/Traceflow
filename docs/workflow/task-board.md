@@ -42,3 +42,6 @@
 | M6-002 Auth core: better-auth wiring, GitHub allowlist, __Host- cookies, 12 h/7 d, denied redirect, origin check forced on | Opus | DONE (19 auth tests; CI pending) | Sonnet to integrate /login + getOperator |
 | M6-003 Supply chain: Trivy image + lockfile scan (fail on fixable CRITICAL/HIGH in our artefacts), CycloneDX SBOM artifact | Opus | DONE locally (fs scan found + fixed 2 HIGH in demo x/net); CI pending | third-party images report-only |
 | M6-004 OTLP-19: reference OTel Go SDK → receiver, 2×503 then 200, Retry-After honoured, stored once | Opus | DONE (10.0 s test) | |
+| M6-005 Failure drills (PG stop, trace-api stop, Collector restart) + Collector self-metrics | Opus | DONE (80/80 traces survived; 0 send failures) | docs/testing/failure-drills.md |
+| M6-006 operator-prod: compose.production.yaml, Caddy (TLS, headers, ingest 404), backup/restore scripts + runbooks, restore drill | Opus | DONE (configs validate; restore drill PASS unencrypted) | age not installed → encrypted round trip NOT TESTED; not deployed |
+| M6-OPEN web runtime image: drop bundled npm (6 HIGH via Trivy) | Sonnet | IN PROGRESS (queued on m6-ui) | CI red until merged |

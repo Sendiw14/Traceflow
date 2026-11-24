@@ -1,0 +1,29 @@
+# TRACEFLOW operator-prod edge (docs/architecture/deployment-topology.md).
+# Only Caddy is published (80/443). It terminates TLS and proxies to the web app.
+# TRACEFLOW_DOMAIN: public hostname (e.g. traceflow.example.org); ACME certificates are automatic.
+{
+	email {$TRACEFLOW_ACME_EMAIL}
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$TRACEFLOW_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		-Server
+	}
+
+	# The OTLP ingest listener is never routed through the edge (remote ingest is off by default).
+	@ingest path /v1/traces
+	respond @ingest 404
+
+	reverse_proxy web:3000
+}
