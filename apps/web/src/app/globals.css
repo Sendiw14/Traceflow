@@ -67,6 +67,8 @@ table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
 .docs-prose p, .docs-prose li { max-width: 68ch; }
 .docs-prose p { margin: 12px 0; }
 .docs-prose ul, .docs-prose ol { padding-left: 22px; margin: 12px 0; }
+.docs-prose ul { list-style: disc; }
+.docs-prose ol { list-style: decimal; }
 .docs-prose li { margin: 4px 0; }
 .docs-prose code:not(.mono) { font-family: var(--tf-font-mono); font-size: 0.9em; background: var(--tf-sunken); padding: 1px 5px; border-radius: 4px; }
 .docs-prose table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 16px 0; }

@@ -4,7 +4,7 @@ import { RangeBar, SamplingCaveat } from "@/components/Scope";
 import { TraceTable } from "@/components/TraceTable";
 import { EmptyState, Notice, PageHeader, Panel, ProblemState } from "@/components/ui";
 import { formatClock, formatCount, formatDateTime } from "@/lib/format";
-import { parseMinDuration, parseTraceFilters, qs, type SearchParams } from "@/lib/query/params";
+import { first, parseMinDuration, parseTraceFilters, qs, type SearchParams } from "@/lib/query/params";
 import { getIngestionStatus, listServices, listTraces } from "@/lib/server/data";
 
 export const metadata = { title: "Traces" };
@@ -16,9 +16,12 @@ export default async function TracesPage({ searchParams }: { searchParams: Promi
   const rangeParam = w.range === "1h" ? undefined : w.range;
   const active = { service: f.service, status: f.status === "any" ? undefined : f.status, min_duration: f.minDuration };
   const min = f.minDuration ? parseMinDuration(f.minDuration) : undefined;
+  // Hidden test/ops knob: ?limit=1..200 (API maximum); default 50. Used to measure dense lists (docs/testing/ui-acceptance.md).
+  const rawLimit = Number(first(sp.limit));
+  const limit = Number.isInteger(rawLimit) && rawLimit >= 1 && rawLimit <= 200 ? rawLimit : 50;
 
   const [list, svcs, ing] = await Promise.all([
-    listTraces({ from: w.from, to: w.to, service: f.service, status: f.status, minDurationNano: min, limit: 50 }),
+    listTraces({ from: w.from, to: w.to, service: f.service, status: f.status, minDurationNano: min, limit }),
     listServices(w.from, w.to),
     getIngestionStatus(w.from, w.to),
   ]);

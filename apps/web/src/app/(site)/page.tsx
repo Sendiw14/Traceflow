@@ -67,7 +67,7 @@ export default function Home() {
 
       <section className="mx-auto max-w-6xl px-4 py-12" aria-labelledby="arch-h" data-testid="home.architecture">
         <h2 id="arch-h" className="font-serif text-3xl tracking-tight">How it fits together</h2>
-        <ol className="mt-4 max-w-3xl pl-5 text-ink-2">
+        <ol className="mt-4 max-w-3xl list-decimal pl-5 text-ink-2">
           <li>Your services export spans over OTLP/HTTP to an OpenTelemetry Collector, which removes common secret-bearing attributes.</li>
           <li>The Collector forwards to the TRACEFLOW receiver (Go), which validates and stores spans in PostgreSQL. Duplicates are absorbed; conflicting replays are kept apart.</li>
           <li>A query API serves traces, services and dependencies to the web app, which is the only thing your browser talks to.</li>
