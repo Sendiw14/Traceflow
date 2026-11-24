@@ -85,3 +85,31 @@
 - Combobox and graph widgets are historically screen-reader fragile; table alternatives are the supported path (A-2).
 - Sticky headers + bottom sheets vs WCAG 2.4.11 need geometry tests (A-3).
 - Chart readout announcements can spam: throttle to key-driven only (A-4).
+
+## M7 results (2026-11-25, branch `m7-ui`)
+
+What was checked, with limits. This is not a conformance claim.
+
+**Automated.** axe-core via Playwright with tags `wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa` on every route and key states (see `docs/testing/ui-acceptance.md` §5): 0 violations in the final build; earlier rounds found and fixed `definition-list`, `link-in-text-block`, `label-content-name-mismatch`, nested `main`. axe covers a subset of WCAG; passing it is not evidence of accessibility.
+
+**Keyboard-only pass** (`node scripts/ui-acceptance.mjs keyboard`: real key presses, recording every focus stop, its role/name, whether a visible focus indicator exists (computed outline/box-shadow), and whether it is in the viewport; I then read the traces). Chromium on macOS; no assistive technology.
+- **Skip link:** first Tab stop on every page is "Skip to main content"; Enter moves focus to `main`.
+- **Visible focus:** every focus stop across all journeys had a computed outline or shadow (0 stops without one; this checks the CSS, not contrast of the ring, which comes from `--tf-focus` on white).
+- **J-02 (slow span):** `/app` → "View example" under p95 reached after 19 Tab stops (skip link + 7 nav + range presets + service scope + refresh + KPI links) → Enter opens the trace with the span selected (1 selected treeitem, inspector populated). No trap.
+- **J-03 (error span):** `/app/traces?status=error`: first trace link is stop 29 (nav, range, filters, chips, Refresh come first); Enter opens it; "Next error span" is reachable by Tab; Enter moves focus to the error treeitem and selects it; ArrowUp/ArrowDown/Enter work; one Tab from the tree reaches the inspector's Close button and Shift+Tab returns (no trap); Escape clears the selection and leaves focus on the tree row. The tree/waterfall is a single Tab stop (roving tabindex).
+- **J-04 (map → trace):** the graph is one Tab stop (listbox); ArrowRight/Enter selects a service and shows details; Escape clears; the next Tab goes to the edge filter input (no trap); the edge-table row button selects an edge. **Finding (not fixed):** the *Details* panel (with the supporting-trace links) is *before* the edge table in DOM order, so after selecting an edge with the keyboard the links are 18 Shift+Tab stops *behind* the focus, not ahead. The panel is an `aria-live` region so the selection is announced, but the links are awkward to reach. Suggested fix: place Details after the table, or move focus to a "Details" heading link on selection.
+- **Cost of repeated navigation:** 19–29 Tab stops precede the first data control on app pages because the skip link targets `main` and the filters live inside it. Acceptable but a "skip to results" target would shorten J-03.
+- **Docs:** copy button reachable in 15 stops; the mobile "Docs menu" disclosure and "On this page" disclosure are native `<details>`.
+
+**Fixed because of this round:** map listbox options were inside an `<svg>` with implicit `role=img` (children presentational, so assistive tech may not expose the options): now `role="none"` on the svg (`0bdc38c`); layout shift on mobile docs (`d27656c`); page-level overflow at 768/1024 (`33dc65b`); missing list markers and clipped waterfall durations at 1024 (`c3f5e49`).
+
+**Screen reader: NOT TESTED.** A VoiceOver pass needs a person at the machine (VoiceOver is turned on with a system shortcut, speaks aloud and takes keyboard focus; an agent cannot observe what is announced, only the accessibility tree). No attempt was made to drive it. What exists instead: `docs/testing/a11y-snapshots/*.yml` (Playwright `ariaSnapshot`):
+- Waterfall/tree: `tree "Spans of trace …"` with `treeitem` per span, names like "error GET /checkout gateway 21.9 ms", `level`, `expanded`, `selected` states.
+- Inspector: `complementary` named by the span name, headings, `dl` terms/definitions, copy buttons with a hidden status region.
+- Edge table: native `table` with caption, `columnheader` buttons, row names that include source/target/basis/counts; select button named "Select edge gateway to orders".
+- Graph: `listbox` with one `option` per service ("gateway 904 req · 25.0 %").
+- Chart: `figure` → `group` "…use arrow keys to step through buckets" plus a `polite` readout paragraph; "View as table" exposes every value.
+- Live regions on `/app`: three chart readouts (`aria-live=polite`), freshness text is deliberately not live, "Load more" count and chart readouts announce on user action only.
+**Manual VoiceOver script to run** (Safari and Chrome): waterfall — rotor to Landmarks/Trees, arrow through spans, check the error announcement and that `Enter` announces the inspector; edge table — table navigation (VO+arrows) and the select buttons; live updates — chart arrow keys, "Load more", copy buttons, onboarding connection state; sign-in states.
+
+**Not covered:** zoom/reflow beyond 200% on three routes, text-spacing overrides, forced-colors, prefers-contrast, target-size measurement of every control (24 px minimum is applied via CSS but not measured), motion beyond the hero (no other animation exists), cognitive checks, and any test with real users.

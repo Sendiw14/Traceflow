@@ -1,0 +1,723 @@
+[
+ {
+  "route": "home",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 6098,
+  "capped": true
+ },
+ {
+  "route": "home",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 5965,
+  "capped": true
+ },
+ {
+  "route": "home",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 4938,
+  "capped": true
+ },
+ {
+  "route": "home",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 4155,
+  "capped": true
+ },
+ {
+  "route": "home",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 4131,
+  "capped": true
+ },
+ {
+  "route": "docs",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 2867,
+  "capped": true
+ },
+ {
+  "route": "docs",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 2791,
+  "capped": true
+ },
+ {
+  "route": "docs",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 2329,
+  "capped": true
+ },
+ {
+  "route": "docs",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 2156,
+  "capped": true
+ },
+ {
+  "route": "docs",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 1966,
+  "capped": true
+ },
+ {
+  "route": "docs-getting-started",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 4046,
+  "capped": true
+ },
+ {
+  "route": "docs-getting-started",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 3920,
+  "capped": true
+ },
+ {
+  "route": "docs-getting-started",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 3263,
+  "capped": true
+ },
+ {
+  "route": "docs-getting-started",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 3137,
+  "capped": true
+ },
+ {
+  "route": "docs-getting-started",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 2920,
+  "capped": true
+ },
+ {
+  "route": "docs-instrumentation",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 5433,
+  "capped": true
+ },
+ {
+  "route": "docs-instrumentation",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 5299,
+  "capped": true
+ },
+ {
+  "route": "docs-instrumentation",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 4528,
+  "capped": true
+ },
+ {
+  "route": "docs-instrumentation",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 4377,
+  "capped": true
+ },
+ {
+  "route": "docs-instrumentation",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 4092,
+  "capped": true
+ },
+ {
+  "route": "docs-architecture",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 4867,
+  "capped": true
+ },
+ {
+  "route": "docs-architecture",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 4647,
+  "capped": true
+ },
+ {
+  "route": "docs-architecture",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 3806,
+  "capped": true
+ },
+ {
+  "route": "docs-architecture",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 3579,
+  "capped": true
+ },
+ {
+  "route": "docs-architecture",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 3291,
+  "capped": true
+ },
+ {
+  "route": "docs-deployment",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 4155,
+  "capped": true
+ },
+ {
+  "route": "docs-deployment",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 4033,
+  "capped": true
+ },
+ {
+  "route": "docs-deployment",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 2975,
+  "capped": true
+ },
+ {
+  "route": "docs-deployment",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 2849,
+  "capped": true
+ },
+ {
+  "route": "docs-deployment",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 2561,
+  "capped": true
+ },
+ {
+  "route": "docs-security",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 4460,
+  "capped": true
+ },
+ {
+  "route": "docs-security",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 4340,
+  "capped": true
+ },
+ {
+  "route": "docs-security",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 3367,
+  "capped": true
+ },
+ {
+  "route": "docs-security",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 3146,
+  "capped": true
+ },
+ {
+  "route": "docs-security",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 2910,
+  "capped": true
+ },
+ {
+  "route": "demo",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 10301,
+  "capped": true
+ },
+ {
+  "route": "demo",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 10233,
+  "capped": true
+ },
+ {
+  "route": "demo",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 5017,
+  "capped": true
+ },
+ {
+  "route": "demo",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 3785,
+  "capped": true
+ },
+ {
+  "route": "demo",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 3692,
+  "capped": true
+ },
+ {
+  "route": "demo-trace",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 1921,
+  "capped": true
+ },
+ {
+  "route": "demo-trace",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 1893,
+  "capped": true
+ },
+ {
+  "route": "demo-trace",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 1461,
+  "capped": false
+ },
+ {
+  "route": "demo-trace",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 1351,
+  "capped": false
+ },
+ {
+  "route": "demo-trace",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 1148,
+  "capped": false
+ },
+ {
+  "route": "app-overview",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 8853,
+  "capped": true
+ },
+ {
+  "route": "app-overview",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 8773,
+  "capped": true
+ },
+ {
+  "route": "app-overview",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 4212,
+  "capped": true
+ },
+ {
+  "route": "app-overview",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 3839,
+  "capped": true
+ },
+ {
+  "route": "app-overview",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 2862,
+  "capped": true
+ },
+ {
+  "route": "app-traces",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 14452,
+  "capped": true
+ },
+ {
+  "route": "app-traces",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 14234,
+  "capped": true
+ },
+ {
+  "route": "app-traces",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 5043,
+  "capped": true
+ },
+ {
+  "route": "app-traces",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 4974,
+  "capped": true
+ },
+ {
+  "route": "app-traces",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 2592,
+  "capped": true
+ },
+ {
+  "route": "app-trace",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 1891,
+  "capped": true
+ },
+ {
+  "route": "app-trace",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 1815,
+  "capped": true
+ },
+ {
+  "route": "app-trace",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 1392,
+  "capped": false
+ },
+ {
+  "route": "app-trace",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 1305,
+  "capped": false
+ },
+ {
+  "route": "app-trace",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 1012,
+  "capped": false
+ },
+ {
+  "route": "app-services",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 1450,
+  "capped": false
+ },
+ {
+  "route": "app-services",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 1386,
+  "capped": false
+ },
+ {
+  "route": "app-services",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "app-services",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "app-services",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "app-service",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 8434,
+  "capped": true
+ },
+ {
+  "route": "app-service",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 8348,
+  "capped": true
+ },
+ {
+  "route": "app-service",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 4161,
+  "capped": true
+ },
+ {
+  "route": "app-service",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 4161,
+  "capped": true
+ },
+ {
+  "route": "app-service",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 3181,
+  "capped": true
+ },
+ {
+  "route": "app-map",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 1533,
+  "capped": true
+ },
+ {
+  "route": "app-map",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 1485,
+  "capped": false
+ },
+ {
+  "route": "app-map",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 1252,
+  "capped": false
+ },
+ {
+  "route": "app-map",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 1216,
+  "capped": false
+ },
+ {
+  "route": "app-map",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 1008,
+  "capped": false
+ },
+ {
+  "route": "app-analytics",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 3017,
+  "capped": true
+ },
+ {
+  "route": "app-analytics",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 2959,
+  "capped": true
+ },
+ {
+  "route": "app-analytics",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 2270,
+  "capped": true
+ },
+ {
+  "route": "app-analytics",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 2328,
+  "capped": true
+ },
+ {
+  "route": "app-analytics",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 2715,
+  "capped": true
+ },
+ {
+  "route": "app-onboarding",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 1867,
+  "capped": true
+ },
+ {
+  "route": "app-onboarding",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 1714,
+  "capped": true
+ },
+ {
+  "route": "app-onboarding",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 1424,
+  "capped": false
+ },
+ {
+  "route": "app-onboarding",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 1324,
+  "capped": false
+ },
+ {
+  "route": "app-onboarding",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 1184,
+  "capped": false
+ },
+ {
+  "route": "app-settings",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 1358,
+  "capped": false
+ },
+ {
+  "route": "app-settings",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 1274,
+  "capped": false
+ },
+ {
+  "route": "app-settings",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 960,
+  "capped": false
+ },
+ {
+  "route": "app-settings",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 904,
+  "capped": false
+ },
+ {
+  "route": "app-settings",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "login",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "login",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "login",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "login",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "login",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "login-denied",
+  "width": 360,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "login-denied",
+  "width": 375,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "login-denied",
+  "width": 768,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "login-denied",
+  "width": 1024,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "login-denied",
+  "width": 1440,
+  "overflowPx": 0,
+  "pageHeight": 900,
+  "capped": false
+ },
+ {
+  "route": "docs-getting-started",
+  "width": "zoom200 (640 css px @2x)",
+  "overflowPx": 0,
+  "pageHeight": 3197,
+  "capped": true
+ },
+ {
+  "route": "demo",
+  "width": "zoom200 (640 css px @2x)",
+  "overflowPx": 0,
+  "pageHeight": 10037,
+  "capped": true
+ },
+ {
+  "route": "app-trace",
+  "width": "zoom200 (640 css px @2x)",
+  "overflowPx": 0,
+  "pageHeight": 1495,
+  "capped": false
+ }
+]

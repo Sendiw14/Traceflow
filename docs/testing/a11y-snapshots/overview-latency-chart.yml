@@ -1,0 +1,8 @@
+- figure "Latency percentiles 60 s buckets · n=3,375":
+  - text: Latency percentiles 60 s buckets · n=3,375
+  - button "p50" [pressed]
+  - button "p95" [pressed]
+  - button "p99" [pressed]
+  - button "View as table"
+  - group "Latency percentiles. Chart; use arrow keys to step through buckets."
+  - paragraph: Use left and right arrow keys to read each bucket.

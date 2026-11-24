@@ -1,0 +1,4 @@
+- listbox "Service dependency graph. Arrow keys move between services, Enter selects, Escape clears, plus and minus zoom.":
+  - option "gateway 904 req · 25.0 %"
+  - option "orders 1,130 req · 20.0 %"
+  - option "inventory 1,356 req · 16.7 %"
