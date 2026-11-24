@@ -339,3 +339,18 @@ RESULTS:
 UPGRADE NOTE: existing local .env lacks the new secrets → move it aside, `make env`, and (to keep an existing pgdata volume) copy the old POSTGRES_PASSWORD back
 FINAL: PASS (local) — CI pending
 ```
+
+## M6-002 — Operator authentication core (ADR-0005)
+
+```text
+TASK_ID: M6-002 | BASE: 8055369 | BRANCH: main
+REQUIREMENT_IDS: SCOPE-07, AC-AUTH-01/02, T-02..T-06, T-20
+FILES: apps/web/src/lib/auth/{config,core,server}.ts + tests, apps/web/src/app/api/auth/[...all]/route.ts, apps/web/package.json (better-auth 1.7.27, pg 8.23.1, @types/pg 8.23.1), pnpm-lock.yaml, CI (web job Postgres + TRACEFLOW_REQUIRE_AUTH_DB), ADR-0005 amendments, auth-spike.md, matrix
+RESULTS (local, PostgreSQL 18.7):
+  vitest src/lib/auth → 19/19 (11 config unit: fail-closed env, numeric allowlist, 7 d cap; 8 integration: state+PKCE S256+own redirect_uri, external callbackURL refused, wrong state → /login no session, allowlisted login with __Host- Secure HttpOnly Lax Path=/ no Domain Max-Age 43200, denied → 302 /login?error=denied with no rows, renamed login allowed, cross-origin sign-out 403, same-origin sign-out deletes session + Clear-Site-Data, linking disabled)
+  SECURITY FINDING (fixed): better-auth skipped origin/CSRF/callbackURL checks under NODE_ENV=test → forced on; both previously-accepted attacks now 403
+  web typecheck, lint, 83 unit (+8 integration skipped locally w/o DB), build → PASS
+  TRACEFLOW_REQUIRE_AUTH_DB=1 without DB → suite fails (cannot silently skip in CI)
+NOT DONE: /login UI and getOperator() wiring into /app layouts and actions (Sonnet); real GitHub OAuth (needs OAuth app, pre-M8); rate limiting on auth routes
+FINAL: PASS (local) — CI pending
+```

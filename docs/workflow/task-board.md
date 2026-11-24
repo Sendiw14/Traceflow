@@ -39,3 +39,4 @@
 | M5b Public site, docs, /demo, profile gating (no /login until M6) | Sonnet | DONE (merged; Opus re-ran: 72 unit, 84/84 e2e, gating per profile incl. bypass header) | M6: shared read actions need session check in operator-prod |
 | M5-GATE M5 exit review | Opus + owner | APPROVED by owner 2026-11-25 | /login moves to M6 with sign-in |
 | M6-001 DB roles: migrate job (superuser), traceflow_app (no DDL), traceflow_ro, traceflow_auth + separate auth DB | Opus | DONE (local + integration test) | `.env` regenerated: old local .env must be moved aside and `make env` re-run |
+| M6-002 Auth core: better-auth wiring, GitHub allowlist, __Host- cookies, 12 h/7 d, denied redirect, origin check forced on | Opus | DONE (19 auth tests; CI pending) | Sonnet to integrate /login + getOperator |

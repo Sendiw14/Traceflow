@@ -67,6 +67,18 @@ jobs:
 
   web:
     runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:18.7@sha256:eb63372c1e05c755f55fa30cbd07aecc443676fc6c0fa90b9002d01537841e1a
+        env:
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: traceflow_test_auth
+        ports: ["127.0.0.1:5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 2s --health-timeout 2s --health-retries 30
+    env:
+      TRACEFLOW_TEST_AUTH_DATABASE_URL: postgres://postgres:ci-only@127.0.0.1:5432/traceflow_test_auth
+      TRACEFLOW_REQUIRE_AUTH_DB: "1"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1 (reads packageManager)
@@ -81,7 +93,8 @@ jobs:
           git diff --exit-code apps/web/src/lib/api/generated
       - run: pnpm -C apps/web lint
       - run: pnpm -C apps/web typecheck
-      - run: pnpm -C apps/web test
+      - name: Unit + auth integration tests (auth suite required, never skipped)
+        run: pnpm -C apps/web test
       - run: pnpm -C apps/web build
 
   secrets:

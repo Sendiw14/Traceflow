@@ -15,8 +15,10 @@
     "gen:api": "openapi-typescript ../../api/openapi.yaml -o src/lib/api/generated/schema.d.ts"
   },
   "dependencies": {
+    "better-auth": "1.7.27",
     "next": "16.4.6",
     "openapi-fetch": "0.17.0",
+    "pg": "8.23.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "server-only": "^0.0.1"
@@ -26,6 +28,7 @@
     "@playwright/test": "1.65.1",
     "@tailwindcss/postcss": "4.3.5",
     "@types/node": "26.6.6",
+    "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "eslint": "10.15.0",

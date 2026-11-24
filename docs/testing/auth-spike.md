@@ -31,3 +31,6 @@
 
 ## Not covered
 Real GitHub, rate limiting on auth routes, session store under a separate DB role, CSP, Next.js integration (route handler + server components), Node 26.
+
+## M6 production-code verification (2026-11-25)
+`apps/web/src/lib/auth/core.integration.test.ts` re-runs the spike checks against the production wiring (real PostgreSQL, mocked GitHub): 8/8 pass, plus 11 config unit tests. **New finding 6:** under Vitest (`NODE_ENV=test`) better-auth disabled its origin checks, so an external `callbackURL` and a cross-origin sign-out were accepted (200). Fixed by `advanced.disableOriginCheck: false`; both now refused (403). The spike missed this because it ran under plain Node.
