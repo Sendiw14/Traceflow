@@ -1,5 +1,6 @@
 import "server-only";
 import { createTraceApiClient } from "@/lib/api/client";
+import { requireAccess } from "./guard";
 import type { components } from "@/lib/api/generated/schema";
 
 export type Schemas = components["schemas"];
@@ -22,6 +23,8 @@ export function api() {
   return createTraceApiClient(url, token);
 }
 
+const UNAUTHORIZED: ApiProblem = { status: 401, code: "unauthorized", title: "Sign-in required" };
+const FORBIDDEN: ApiProblem = { status: 403, code: "forbidden", title: "Not available in this deployment" };
 const NOT_CONFIGURED: ApiProblem = {
   status: 503, code: "storage_unavailable", title: "TRACEFLOW is not configured",
   detail: "TRACE_API_URL and TRACEFLOW_SERVICE_TOKEN must be set for the web service.",
@@ -31,6 +34,9 @@ interface Raw<T> { data?: T; error?: unknown; response: Response }
 
 /** Normalises openapi-fetch results and network failures into Result<T>; never throws. */
 export async function call<T>(fn: (c: NonNullable<ReturnType<typeof api>>) => Promise<Raw<T>>): Promise<Result<T>> {
+  // Backstop for layouts (which do not re-run on client navigation): no operator, no data. Shared reads stay open in public-demo.
+  const access = await requireAccess(null);
+  if (!access.ok) return { ok: false, error: access.code === "unauthorized" ? UNAUTHORIZED : FORBIDDEN };
   const c = api();
   if (!c) return { ok: false, error: NOT_CONFIGURED };
   try {
@@ -79,7 +85,6 @@ export const getSpan = (traceId: string, spanId: string) =>
 export const listTraces = (q: { from: bigint; to: bigint; service?: string; status?: "any" | "error" | "ok_or_unset"; minDurationNano?: bigint; cursor?: string; limit?: number }) =>
   call((c) => c.GET("/v1/traces", { params: { query: { from: ns(q.from), to: ns(q.to), service: q.service, status: q.status, min_duration_nano: q.minDurationNano === undefined ? undefined : ns(q.minDurationNano), cursor: q.cursor, limit: q.limit } } }));
 
-/** M5 has no sign-in (ADR-0005 lands in M6): audit rows use sentinel actor "0", which is not a real GitHub ID. M6 must replace this with the session identity before operator-prod can serve /app/settings. */
-const LOCAL_DEV_ACTOR = "0";
-export const updateSettings = (body: Schemas["SettingsPatch"]) =>
-  call((c) => c.PATCH("/v1/settings", { params: { header: { "X-Traceflow-Actor": LOCAL_DEV_ACTOR } }, body }));
+/** `actor` is the signed-in operator's numeric GitHub ID (bootstrap: "0") — never taken from the request. */
+export const updateSettings = (body: Schemas["SettingsPatch"], actor: string) =>
+  call((c) => c.PATCH("/v1/settings", { params: { header: { "X-Traceflow-Actor": actor } }, body }));

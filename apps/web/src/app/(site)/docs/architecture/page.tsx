@@ -37,7 +37,7 @@ export default function Architecture() {
         <caption className="sr-only">Trust boundaries</caption>
         <thead><tr><th scope="col">Boundary</th><th scope="col">What crosses it</th><th scope="col">Control</th></tr></thead>
         <tbody>
-          <tr><th scope="row">Browser → web</th><td>Page requests</td><td>Route gating by deployment profile, enforced on the server</td></tr>
+          <tr><th scope="row">Browser → web</th><td>Page requests</td><td>Route gating by deployment profile, enforced on the server; in <code>operator-prod</code> a signed-in, allow-listed operator is required for <code>/app</code></td></tr>
           <tr><th scope="row">Web → trace-api query</th><td>Service-token requests</td><td>Private Docker network and a 256-bit bearer token</td></tr>
           <tr><th scope="row">SDK → Collector → trace-api ingest</th><td>Untrusted OTLP payloads</td><td>Size limits, validation, redaction, internal-only network</td></tr>
           <tr><th scope="row">trace-api → PostgreSQL</th><td>SQL</td><td>Parameterised queries; database on its own internal network</td></tr>
@@ -65,7 +65,7 @@ export default function Architecture() {
         <thead><tr><th scope="col">Profile</th><th scope="col">Purpose</th><th scope="col">Routes served by the web app</th><th scope="col">State</th></tr></thead>
         <tbody>
           <tr><th scope="row"><code>local-dev</code></th><td>Your machine</td><td>Everything: site, docs, <code>/app</code>, <code>/demo</code></td><td>Built</td></tr>
-          <tr><th scope="row"><code>operator-prod</code></th><td>A private single-operator deployment</td><td>Site, docs, <code>/app</code>; <code>/demo</code> is 404</td><td>Route gating built; sign-in and deployment not built</td></tr>
+          <tr><th scope="row"><code>operator-prod</code></th><td>A private single-operator deployment</td><td>Site, docs, <code>/login</code>, <code>/app</code> (after sign-in); <code>/demo</code> is 404</td><td>Gating and sign-in built (real GitHub untested); deployment not built</td></tr>
           <tr><th scope="row"><code>public-demo</code></th><td>A separate read-only synthetic demo</td><td>Site, docs, <code>/demo</code>; <code>/app</code> is 404</td><td>Route gating built; deployment not built</td></tr>
         </tbody>
       </table></div>

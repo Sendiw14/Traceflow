@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
 import { updateRetention } from "@/app/app/settings/actions";
+import { loginUrl } from "@/lib/login";
 
 export function RetentionForm({ current, nextRun }: { current: number; nextRun: string | null }) {
   const router = useRouter();
@@ -21,6 +22,7 @@ export function RetentionForm({ current, nextRun }: { current: number; nextRun: 
     start(async () => {
       const r = await updateRetention(parsed);
       if (r.ok) { setSaved(r.settings.retention_days); router.refresh(); }
+      else if (r.code === "unauthorized") window.location.assign(loginUrl(window.location.pathname, "expired"));
       else setError(r.fieldError ?? r.message);
       dialog.current?.close();
     });

@@ -22,8 +22,16 @@ export default function Security() {
       <H2 id="ingest">Ingestion is off by default</H2>
       <p><strong>Remote OTLP ingestion is off by default.</strong> The ingest listener is reachable only from the Collector and demo services on a private network and is not routed to the internet. Enabling remote ingestion would need a separate decision with authentication, TLS and rate limiting; none of that exists today, so do not expose port 4318. Request size limits, concurrency limits and gzip bomb protection apply to the listener regardless.</p>
       <H2 id="auth">Sign-in</H2>
-      <Callout kind="warn" title="Sign-in lands in milestone M6">
-        There is no sign-in yet. Under <code>local-dev</code> the app is open to anyone who can reach it, which is why the Compose file publishes the web app on <code>127.0.0.1</code> only. The planned design is GitHub OAuth for a single operator, an allowlist by numeric GitHub user ID and server-side sessions (ADR-0005). It has been exercised in a spike against a mocked GitHub only. <Link href="/docs/deployment#notbuilt">Do not deploy <code>operator-prod</code> before it exists.</Link>
+      <p>Sign-in is implemented for the <code>operator-prod</code> profile: GitHub OAuth for a single operator, with access limited to an allowlist of numeric GitHub user IDs (usernames are never used for access decisions). Details, from ADR-0005:</p>
+      <ul>
+        <li>Sessions are stored server-side in a separate PostgreSQL database that the trace data roles cannot reach. Cookies are <code>__Host-</code> prefixed, <code>HttpOnly</code>, <code>Secure</code> and <code>SameSite=Lax</code>. A session idles out after 12 hours and never lasts more than 7 days.</li>
+        <li>The allowlist and the 7-day limit are checked again on every request, so removing an ID takes effect immediately.</li>
+        <li>Every <code>/app</code> page and every server action checks for a signed-in operator on the server; the route gate alone is not trusted. Without one, <code>/app</code> redirects to <code>/login</code> and renders no data.</li>
+        <li>Origin and CSRF checks are on, account linking is off, and signing out clears the session and tells the browser to drop cached site data.</li>
+        <li>With missing or invalid sign-in configuration, <code>operator-prod</code> serves no sign-in and <code>/app</code> stays closed.</li>
+      </ul>
+      <Callout kind="warn" title="Real GitHub sign-in has not been tested">
+        The flow has been exercised against a mocked GitHub and in automated tests with an unreachable auth database. It has not been run against a real GitHub OAuth app yet, and no <code>operator-prod</code> deployment exists. The <code>local-dev</code> profile has no sign-in: it acts as a fixed local operator and only for loopback hosts, which is why the Compose file publishes the web app on <code>127.0.0.1</code> only. <Link href="/docs/deployment#notbuilt">Hosted deployment is not built.</Link>
       </Callout>
       <H2 id="data">Data minimisation</H2>
       <ul>
@@ -41,7 +49,7 @@ export default function Security() {
       </ul>
       <H2 id="limits">Limitations</H2>
       <ul>
-        <li>No sign-in yet (above). No multi-user access control: V1 targets one operator.</li>
+        <li>Real GitHub sign-in is untested (above). No multi-user access control: V1 targets one operator.</li>
         <li>Delivery from SDK to database is not zero-loss (see <Link href="/docs/instrumentation#caveats">Instrumentation</Link>).</li>
         <li>No dependency or image vulnerability scan has been run yet; a secret scan of the repository history has passed.</li>
         <li>No hosted deployment, TLS or backup procedure exists yet.</li>

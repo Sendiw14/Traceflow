@@ -62,7 +62,7 @@ export function ProblemState({ problem, resetHref, compact }: { problem: ApiProb
       ))}
       {problem.retryAfter ? <p className="mt-1 text-sm text-ink-2">Retry after {problem.retryAfter} s.</p> : null}
       <div className="mt-3 flex gap-3">
-        {copy.kind === "link" && resetHref ? <Link href={resetHref} className="btn">Reset view</Link> : <RetryButton />}
+        {copy.kind === "link" && resetHref ? <Link href={resetHref} className="btn">Reset view</Link> : copy.kind === "session" ? <a href="/login" className="btn">Sign in</a> : <RetryButton />}
       </div>
     </div>
   );

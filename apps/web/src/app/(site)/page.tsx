@@ -19,12 +19,12 @@ const FEATURES = [
 ] as const;
 
 const FAQ = [
-  ["Is TRACEFLOW production-ready?", "No. V1 is in development. The ingest path, query API and local web app work; operator sign-in and hosted deployments are not built yet."],
+  ["Is TRACEFLOW production-ready?", "No. V1 is in development. The ingest path, query API and local web app work. Operator sign-in exists but has only been tested against a mocked GitHub, and hosted deployments are not built yet."],
   ["What do I need to run it?", "Docker with Compose, make and openssl. The getting-started guide has the exact commands."],
   ["What telemetry does it accept?", "OpenTelemetry traces over OTLP/HTTP as binary Protobuf. JSON OTLP, metrics and logs are not supported."],
   ["Does it sample, estimate or guess?", "No. It shows the spans it received. If your SDK samples, dropped spans are not reconstructed, and every aggregate says which spans it covers."],
   ["Is the demo real data?", "No. It is synthetic traffic from three small demo services (gateway, orders, inventory). It is read-only and contains nothing private."],
-  ["Can I put it on the internet?", "Not today. There is no sign-in yet, and remote ingestion is off by default. Run it on a machine you control."],
+  ["Can I put it on the internet?", "Not today. Sign-in exists but has not been tested against real GitHub, no hosted deployment is built, and remote ingestion is off by default. Run it on a machine you control."],
   ["What licence is it under?", "Apache-2.0."],
 ] as const;
 
