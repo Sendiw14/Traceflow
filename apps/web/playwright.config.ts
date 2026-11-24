@@ -14,8 +14,7 @@ export default defineConfig({
   webServer: external
     ? undefined
     : {
-        command:
-          "pnpm build && cp -R .next/static .next/standalone/apps/web/.next/static && HOSTNAME=127.0.0.1 PORT=3100 node .next/standalone/apps/web/server.js",
+        command: "sh e2e/serve.sh",
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 240_000,

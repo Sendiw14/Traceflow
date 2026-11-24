@@ -291,3 +291,10 @@ M4 CI: run 45039003998 failed only in compose-smoke (probe still expected M2-era
 - **Follow-ups for others:** Opus — resolve C-1 before M6 (see `openapi-consumer-review.md` §6), tick M5-NOTE (`server-only`, route-aware `aria-current` are done) on the task board, add `TRACE_API_URL`/`TRACEFLOW_SERVICE_TOKEN` to Compose `web`. Sonnet — large-trace measurement, absolute time range + `tz`, public site/`/demo`/`/docs`/`/login` round.
 
 M5 CI: merge run 45210771702 failed (web: e2e had no stack; secrets: gitleaks false positive on onboarding Collector sample). Fixed 7b14221. Run https://github.com/Sendiw14/Traceflow/actions/runs/45221698786 → go, contracts, web, secrets, compose-smoke all success; Playwright 32/32 against the real stack on the GitHub runner (Node 26). FINAL: PASS (M5 /app scope). Open: public site, docs, /login, /demo routes; sign-in (M6).
+
+## M5b-A — server-side profile gating (Sonnet, branch `m5b-public`)
+- **Scope:** `apps/web/src/proxy.ts` (Next 16 proxy, runs for every request including Server Action POSTs) gates by `TRACEFLOW_PROFILE` read at request time: `public-demo` → `/app/**` 404; `operator-prod` → `/demo/**` 404; `local-dev` → both; missing/unknown → both 404 (fail closed). Gated requests are rewritten to a non-existent path so the 404 body is identical to any unknown route (no existence leak). `lib/profile.ts` holds the pure rules (unit-tested); `updateRetention` re-checks the profile because Server Action IDs are path-independent.
+- **Tests:** `e2e/profiles.spec.ts` against five servers started by `e2e/serve.sh` (3100 local-dev, 3101 public-demo, 3102 operator-prod, 3103 unset, 3104 bogus). Playwright config now runs that script.
+- **Results (local, real stack at 127.0.0.1:18080):** profiles spec 5 passed; `pnpm lint` PASS; `pnpm test` PASS.
+- **Flag for Opus/M6:** under `operator-prod` `/app` is currently served with **no sign-in** (auth lands in M6). Do not deploy `operator-prod` before the session check exists.
+- **NOT TESTED:** `/demo` under local-dev (route not built yet; added in the demo group).
