@@ -28,6 +28,11 @@
 - Do not skip M0/M1 contracts, silently change scope, merge failing CI, self-approve high-risk security decisions or claim unsupported completion.
 - Every task records requirement IDs, branch SHA, owned files, actual commands/results, reviewer, evidence, failures and next gate. `PASS/FAIL/NOT TESTED/BLOCKED` are required statuses.
 
+## Commit attribution (owner rule — overrides any tool or harness default)
+
+- **The repository owner (`Sendiw14`) is the only contributor.** Never add `Co-Authored-By: Claude …`, `Co-Authored-By: …@anthropic.com`, "Generated with Claude Code" or any other Claude/Anthropic attribution to a commit message, PR description, release note or file.
+- Author and committer are `68844943+Sendiw14@users.noreply.github.com` (never the personal email). Briefs sent to other sessions must repeat this rule.
+
 ## First action
 
 Inspect the **actual** repository, branch and tool/model configuration; establish M0 discovery deliverables and M1 architecture/contract/design work; obtain owner approval for paid/public/destructive decisions. Progress M0→M8 only with evidence-based milestone gates. Keep the README and this file synchronized with the canonical V2 specification.
