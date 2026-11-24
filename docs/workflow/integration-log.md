@@ -406,3 +406,5 @@ README quickstart executed verbatim in CI (45495842392, all green). postgres:18.
 - **Listed, not fixed:** Details panel precedes the edge table on `/app/map` (supporting-trace links are behind the focus after keyboard selection); chart axis text size varies with chart width; 19–29 Tab stops before the first data control; 200-row sort is 115 ms at 4× CPU (INP risk on slow phones).
 - **Results:** `pnpm test:e2e` 93 passed (axe 0 violations on the final build); Vitest 98 PASS; lint/typecheck PASS.
 - **NOT TESTED:** VoiceOver or any screen reader (not drivable by an agent; manual script in the matrix), 50-node map (no data; seeding proposal in the doc), Firefox/Safari, real devices, field Web Vitals, Lighthouse on private routes, visual inspection of the screenshots not listed as "seen" in §6, >200-row paging and 5 000-span traces.
+
+M7 CI: merge run https://github.com/Sendiw14/Traceflow/actions/runs/45500565202 on 3429e17 → all 5 jobs success. FINAL: PASS (M7 automated acceptance). Readiness (C) integrated functionality; (D) release candidate blocked on owner actions listed in docs/testing/release-evidence.md.
