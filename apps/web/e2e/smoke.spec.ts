@@ -3,12 +3,12 @@ import { expectNoStore, requireStack } from "./helpers";
 
 test.beforeAll(requireStack);
 
-test("home links to the app, which renders the overview", async ({ page }) => {
+test("home renders and the demo CTA reaches the demo", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { level: 1, name: "TRACEFLOW" })).toBeVisible();
-  await page.getByRole("link", { name: "Open the application shell" }).click();
-  await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByRole("heading", { level: 1, name: "Overview" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Every request has a story");
+  await page.getByTestId("home.cta-demo").click();
+  await expect(page).toHaveURL(/\/demo$/);
+  await expect(page.getByTestId("demo.banner")).toBeVisible();
 });
 
 const ROUTES = ["/app", "/app/traces", "/app/services", "/app/map", "/app/analytics", "/app/onboarding", "/app/settings"];

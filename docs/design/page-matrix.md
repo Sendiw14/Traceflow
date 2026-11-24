@@ -212,6 +212,11 @@ The matrix above stays the design intent. Where the first implementation differs
 | Settings preferences | timezone, time format | omitted (only UTC exists; a control that does nothing would be a phantom feature) | with `tz=local` |
 | `raw-json` region | not rendered until it exists | not rendered | — |
 | HTTP status of not-found states | 404 view | invalid trace ID → 404 view (HTTP 200 because the response streams); unknown service/trace → in-page not-found state | — |
-| Public site, `/docs`, `/login`, `/demo*` | in scope of the matrix | **not built in M5** (app routes first) | later round |
+| Public site (`/`), `/docs/**`, `/demo`, `/demo/traces/[traceId]` | in scope of the matrix | **built in M5b** (see below); `/login` **not built** (lands with sign-in in M6, no link points to it) | — |
+| `/` journey | interactive journey with steps | five tabs, one per demo scenario (normal, slow, error, parallel, missing-parent), each a real captured trace shape; no autoplay | — |
+| `/` hero | skip first in tab order | "Skip animation" is the first focusable control inside the hero (top-right); line-draw is the bar reveal of the real `normal` trace (≈0.8 s once); off for reduced motion | — |
+| `/` header/CTA under `operator-prod` | — | Demo link and "Explore live demo" CTA are not rendered when the profile does not serve `/demo` (a "Read the docs" CTA replaces it) | — |
+| `/demo` | overview, traces and service quick-investigation | one page with three sections (`#overview`, `#services`, `#traces`) plus an inline `?service=` investigation; the service map is not part of the demo (`/demo/map` does not exist) | map in demo if wanted |
+| `/docs` rendering | static MDX | TSX pages, rendered per request (the header depends on the profile); copy buttons; no MDX or syntax highlighter | static export later |
 
-Verified in M5 (real stack): J-02, J-03 (keyboard only), J-04, axe WCAG 2.2 A/AA on all nine app views including trace detail with inspector/tree/table open, 375 px reflow on every app route. See `docs/workflow/integration-log.md` M5-E.
+Verified in M5 (real stack): J-02, J-03 (keyboard only), J-04, axe WCAG 2.2 A/AA on all nine app views including trace detail with inspector/tree/table open, 375 px reflow on every app route. See `docs/workflow/integration-log.md` M5-E. M5b adds axe (WCAG 2.2 A/AA) on `/`, `/docs/**`, `/demo` and the demo trace page, 375 px reflow on all of them, and the profile 404 rules.
