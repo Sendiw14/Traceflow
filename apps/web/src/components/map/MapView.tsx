@@ -73,7 +73,8 @@ export function MapView({ nodes, edges }: { nodes: S[]; edges: E[] }) {
             <div role="listbox" tabIndex={0} aria-label="Service dependency graph. Arrow keys move between services, Enter selects, Escape clears, plus and minus zoom."
               aria-activedescendant={focus ? idx(focus) : undefined} onKeyDown={onKey}
               className="overflow-hidden rounded-lg border border-line bg-paper" data-testid="map.graph">
-              <svg viewBox={`0 0 ${w} ${h}`} className="block h-auto w-full" style={{ minHeight: 200, maxHeight: 520 }}>
+              {/* role=none: an <svg> defaults to role=img, whose children are presentational and would hide the listbox options from assistive tech */}
+              <svg role="none" viewBox={`0 0 ${w} ${h}`} className="block h-auto w-full" style={{ minHeight: 200, maxHeight: 520 }}>
                 <defs>
                   <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--tf-ink-3)" /></marker>
                 </defs>
