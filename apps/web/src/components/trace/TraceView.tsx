@@ -13,8 +13,8 @@ import { SpanInspector } from "./SpanInspector";
 type View = "waterfall" | "tree" | "table";
 const LARGE = 5000;
 
-export function TraceView({ traceId, spans, resources, scopes, detail, initialSpan, generatedAt, lastReceivedAt }: {
-  traceId: string; spans: SpanT[]; resources: Schemas["Resource"][]; scopes: Schemas["InstrumentationScope"][];
+export function TraceView({ traceBase, traceId, spans, resources, scopes, detail, initialSpan, generatedAt, lastReceivedAt }: {
+  traceBase: string; traceId: string; spans: SpanT[]; resources: Schemas["Resource"][]; scopes: Schemas["InstrumentationScope"][];
   detail: "full" | "lite"; initialSpan: string | null; generatedAt: string; lastReceivedAt: string | null;
 }) {
   const router = useRouter();
@@ -209,7 +209,7 @@ export function TraceView({ traceId, spans, resources, scopes, detail, initialSp
             </div>
           )}
         </div>
-        <SpanInspector traceId={traceId} selected={selected} liteSpan={selSpan} fullSpan={fullSpan} resources={resources} scopes={scopes} onClose={() => { const s = selected; select(null); moveFocus(s); }} />
+        <SpanInspector traceBase={traceBase} traceId={traceId} selected={selected} liteSpan={selSpan} fullSpan={fullSpan} resources={resources} scopes={scopes} onClose={() => { const s = selected; select(null); moveFocus(s); }} />
       </div>
     </div>
   );

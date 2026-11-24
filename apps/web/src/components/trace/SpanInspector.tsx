@@ -37,8 +37,8 @@ function Attrs({ list }: { list: Attr[] }) {
 
 type Loaded = { spanId: string; result: { ok: true; detail: Schemas["SpanDetail"] } | { ok: false; message: string } };
 
-export function SpanInspector({ traceId, selected, liteSpan, fullSpan, resources, scopes, onClose }: {
-  traceId: string; selected: string | null; liteSpan: Span | null; fullSpan: Span | null;
+export function SpanInspector({ traceBase, traceId, selected, liteSpan, fullSpan, resources, scopes, onClose }: {
+  traceBase: string; traceId: string; selected: string | null; liteSpan: Span | null; fullSpan: Span | null;
   resources: Schemas["Resource"][]; scopes: Schemas["InstrumentationScope"][]; onClose: () => void;
 }) {
   const needsFetch = selected !== null && fullSpan === null;
@@ -118,7 +118,7 @@ export function SpanInspector({ traceId, selected, liteSpan, fullSpan, resources
             {(span.links ?? []).length === 0 ? <p className="m-0 text-sm text-ink-3">None.</p> : (
               <ul className="m-0 list-none space-y-2 p-0 text-sm">
                 {span.links!.map((l, i) => (
-                  <li key={i}><Link href={`/app/traces/${l.trace_id}?span=${l.span_id}`} className="mono">{l.trace_id.slice(0, 8)}…/{l.span_id.slice(0, 8)}</Link> <span className="text-ink-3">(may not be retained)</span></li>
+                  <li key={i}><Link href={`${traceBase}/${l.trace_id}?span=${l.span_id}`} className="mono">{l.trace_id.slice(0, 8)}…/{l.span_id.slice(0, 8)}</Link> <span className="text-ink-3">(may not be retained)</span></li>
                 ))}
               </ul>
             )}

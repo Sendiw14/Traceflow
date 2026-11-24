@@ -18,7 +18,7 @@ async function status(request: import("@playwright/test").APIRequestContext, bas
 
 test("public-demo: every /app route is 404, public routes stay up", async ({ request }) => {
   for (const p of APP) expect(await status(request, URLS["public-demo"], p), p).toBe(404);
-  expect(await status(request, URLS["public-demo"], "/")).toBe(200);
+  for (const p of ["/", "/docs", "/demo"]) expect(await status(request, URLS["public-demo"], p), p).toBe(200);
 });
 
 test("operator-prod: every /demo route is 404, /app stays up", async ({ request }) => {
@@ -27,8 +27,9 @@ test("operator-prod: every /demo route is 404, /app stays up", async ({ request 
   expect(await status(request, URLS["operator-prod"], "/")).toBe(200);
 });
 
-test("local-dev: /app is on", async ({ request }) => {
+test("local-dev: /app and /demo are both on", async ({ request }) => {
   expect(await status(request, URLS["local-dev"], "/app")).toBe(200);
+  expect(await status(request, URLS["local-dev"], "/demo")).toBe(200);
 });
 
 for (const kind of ["unset", "bogus"] as const) {

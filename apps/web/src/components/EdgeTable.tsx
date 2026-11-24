@@ -11,8 +11,8 @@ import { Badge } from "./ui";
 
 type E = Schemas["DependencyEdge"];
 
-export function EdgeTable({ edges, caption, selected, onSelect, filterable, testId = "map.edge-table" }: {
-  edges: E[]; caption: string; selected?: string | null; onSelect?: (key: string) => void; filterable?: boolean; testId?: string;
+export function EdgeTable({ edges, caption, selected, onSelect, filterable, testId = "map.edge-table", traceBase = "/app/traces" }: {
+  traceBase?: string; edges: E[]; caption: string; selected?: string | null; onSelect?: (key: string) => void; filterable?: boolean; testId?: string;
 }) {
   const [q, setQ] = useState("");
   const rows = q ? edges.filter((e) => `${e.source} ${e.target}`.toLowerCase().includes(q.toLowerCase())) : edges;
@@ -28,7 +28,7 @@ export function EdgeTable({ edges, caption, selected, onSelect, filterable, test
     { id: "last", header: "Last seen", sort: (e) => parseNanos(e.evidence.last_seen_unix_nano), cell: (e) => formatDateTime(e.evidence.last_seen_unix_nano) },
     { id: "samples", header: "Sample traces", cell: (e) => (
       <span className="flex flex-wrap gap-2">
-        {e.evidence.sample_trace_ids.length === 0 ? "—" : e.evidence.sample_trace_ids.map((t) => <Link key={t} href={`/app/traces/${t}`} className="mono" aria-label={`Sample trace ${shortId(t)}`}>{shortId(t)}</Link>)}
+        {e.evidence.sample_trace_ids.length === 0 ? "—" : e.evidence.sample_trace_ids.map((t) => <Link key={t} href={`${traceBase}/${t}`} className="mono" aria-label={`Sample trace ${shortId(t)}`}>{shortId(t)}</Link>)}
       </span>) },
   ];
   return (

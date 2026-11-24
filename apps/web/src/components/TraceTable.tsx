@@ -21,8 +21,8 @@ function completeness(t: T) {
   return items.length === 0 ? <Badge tone="ok">complete</Badge> : <Badge tone="warn">{items.join(" · ")}</Badge>;
 }
 
-export function TraceTable({ initial, nextCursor, query, caption, rangeQuery = "" }: {
-  initial: T[]; nextCursor?: string | null; query?: TraceQuery; caption: string; rangeQuery?: string;
+export function TraceTable({ initial, nextCursor, query, caption, rangeQuery = "", traceBase = "/app/traces" }: {
+  traceBase?: string; initial: T[]; nextCursor?: string | null; query?: TraceQuery; caption: string; rangeQuery?: string;
 }) {
   const [rows, setRows] = useState(initial);
   const [cursor, setCursor] = useState(nextCursor ?? null);
@@ -58,7 +58,7 @@ export function TraceTable({ initial, nextCursor, query, caption, rangeQuery = "
 
   const cols: Column<T>[] = [
     { id: "start", header: "Start (UTC)", sort: (t) => parseNanos(t.start_unix_nano), cell: (t) => (
-      <Link data-trace={t.trace_id} href={`/app/traces/${t.trace_id}${rangeQuery}`} aria-label={`Trace ${t.trace_id}, started ${formatDateTime(t.start_unix_nano)}`}>{formatDateTime(t.start_unix_nano)}</Link>) },
+      <Link data-trace={t.trace_id} href={`${traceBase}/${t.trace_id}${rangeQuery}`} aria-label={`Trace ${t.trace_id}, started ${formatDateTime(t.start_unix_nano)}`}>{formatDateTime(t.start_unix_nano)}</Link>) },
     { id: "id", header: "Trace ID", cell: (t) => <span className="mono">{shortId(t.trace_id)}</span> },
     { id: "root", header: "Root operation", sort: (t) => t.root?.name ?? "", cell: (t) => t.root
       ? <span>{t.root.service_name} <span className="text-ink-3">·</span> {t.root.name}</span>
