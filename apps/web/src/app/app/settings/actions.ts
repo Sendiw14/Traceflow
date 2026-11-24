@@ -1,6 +1,6 @@
 "use server";
 
-import { allows, currentProfile } from "@/lib/profile";
+import { actionAllowed } from "@/lib/profile";
 import { updateSettings, type Schemas } from "@/lib/server/data";
 
 export type UpdateResult =
@@ -10,7 +10,7 @@ export type UpdateResult =
 /** Server Action: validates the (untrusted) value, then asks trace-api. Retention is 1–90 whole days. */
 export async function updateRetention(days: unknown): Promise<UpdateResult> {
   // Defence in depth: Server Action IDs are not tied to a path, so re-check the profile here.
-  if (!allows(currentProfile(), "app")) return { ok: false, code: "forbidden", message: "Not available in this deployment." };
+  if (!actionAllowed("app")) return { ok: false, code: "forbidden", message: "Not available in this deployment." };
   if (typeof days !== "number" || !Number.isInteger(days) || days < 1 || days > 90) {
     return { ok: false, code: "invalid_parameter", message: "Retention must be a whole number of days from 1 to 90.", fieldError: "Enter a whole number from 1 to 90." };
   }

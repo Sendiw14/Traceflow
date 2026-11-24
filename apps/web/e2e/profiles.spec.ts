@@ -45,3 +45,10 @@ test("a gated 404 does not leak whether the route would exist", async ({ request
   expect(a.status()).toBe(404);
   expect(await a.text()).toBe(await b.text());
 });
+
+test("second layer: layouts still 404 when the proxy is skipped via the subrequest header", async ({ request }) => {
+  const headers = { "x-middleware-subrequest": ["middleware", "proxy", "src/middleware", "src/proxy"].join(":").repeat(1) + ":middleware:middleware:middleware:middleware:middleware" };
+  for (const p of ["/app", "/app/settings", `/app/traces/${TRACE}`]) expect((await request.get(`${URLS["public-demo"]}${p}`, { headers })).status(), p).toBe(404);
+  for (const p of DEMO) expect((await request.get(`${URLS["operator-prod"]}${p}`, { headers })).status(), p).toBe(404);
+  for (const p of [...APP, ...DEMO]) expect((await request.get(`${URLS.bogus}${p}`, { headers })).status(), p).toBe(404);
+});

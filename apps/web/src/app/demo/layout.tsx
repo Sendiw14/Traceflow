@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { GITHUB, Wordmark } from "@/components/site/SiteChrome";
+import { assertArea } from "@/lib/profile";
 
 // Public demo: dynamic (profile-gated), read-only, synthetic data only. No `private` cache header required.
 export const dynamic = "force-dynamic";
 
 export default function DemoLayout({ children }: { children: React.ReactNode }) {
+  assertArea("demo"); // independent of proxy.ts
   return (
     <>
       <div role="note" data-testid="demo.banner" className="border-b border-[var(--tf-violet)] bg-[var(--tf-violet-tint)] px-4 py-2 text-center text-sm font-medium text-[var(--tf-violet-strong)]">

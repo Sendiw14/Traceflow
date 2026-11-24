@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 // Deployment profile gating (authz-matrix.md). Enforced server-side per request; links are never the control.
 export const PROFILES = ["local-dev", "operator-prod", "public-demo"] as const;
 export type Profile = (typeof PROFILES)[number];
@@ -27,4 +28,14 @@ export function areaOf(pathname: string): Area | null {
 
 export function currentProfile(): Profile | null {
   return parseProfile(process.env.TRACEFLOW_PROFILE);
+}
+
+/** Second, independent gate (ADR-0005: middleware alone is not trusted). Call from layouts; renders the 404 when the profile does not serve the area. */
+export function assertArea(area: Area, profile: Profile | null = currentProfile()): void {
+  if (!allows(profile, area)) notFound();
+}
+
+/** Server Action guard: actions are POSTs resolved by ID, so each one re-checks. `area` null = any served area (shared by /app and /demo). */
+export function actionAllowed(area: Area | null, profile: Profile | null = currentProfile()): boolean {
+  return area === null ? allows(profile, "app") || allows(profile, "demo") : allows(profile, area);
 }
