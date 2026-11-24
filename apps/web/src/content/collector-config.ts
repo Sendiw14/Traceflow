@@ -43,6 +43,13 @@ service:
   telemetry:
     metrics:
       level: normal
+      # Self-metrics (queue size, sent/failed/dropped spans) on the internal ingest network only.
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
   pipelines:
     traces:
       receivers: [otlp]
