@@ -46,4 +46,4 @@
 | M6-006 operator-prod: compose.production.yaml, Caddy (TLS, headers, ingest 404), backup/restore scripts + runbooks, restore drill | Opus | DONE (configs validate; restore drill PASS unencrypted) | age not installed → encrypted round trip NOT TESTED; not deployed |
 | M6-OPEN web runtime image: drop bundled npm (6 HIGH via Trivy) | Sonnet | DONE (merged 18c82e0; node pinned by digest) | CI verifies |
 | M6-UI /login, sign-in on /app, auth at data source (call()), actor from session | Sonnet | DONE (merged; Opus review PASS: 106 unit, 93/93 e2e, signed-out operator-prod → /login, RSC request returns no data) | real GitHub NOT TESTED |
-| M6-GATE M6 exit review | Opus + owner | READY FOR OWNER | open: independent security review, age round trip, real GitHub OAuth, third-party image CVEs decision |
+| M6-GATE M6 exit review | Opus + owner | APPROVED by owner 2026-11-25 | carried into M7: security review, age, OAuth, image CVEs |
