@@ -63,3 +63,12 @@ table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
   table.stack td { display: flex; justify-content: space-between; gap: 12px; border: 0; padding: 2px 8px; }
   table.stack td::before { content: attr(data-label); color: var(--tf-ink-3); }
 }
+
+.docs-prose p, .docs-prose li { max-width: 68ch; }
+.docs-prose p { margin: 12px 0; }
+.docs-prose ul, .docs-prose ol { padding-left: 22px; margin: 12px 0; }
+.docs-prose li { margin: 4px 0; }
+.docs-prose code:not(.mono) { font-family: var(--tf-font-mono); font-size: 0.9em; background: var(--tf-sunken); padding: 1px 5px; border-radius: 4px; }
+.docs-prose table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 16px 0; }
+.docs-prose th, .docs-prose td { border-bottom: 1px solid var(--tf-border); padding: 8px; text-align: left; vertical-align: top; }
+.docs-prose .table-wrap { overflow-x: auto; }
