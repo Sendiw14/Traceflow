@@ -159,6 +159,26 @@ jobs:
           slow=$(q "select root_duration_nano from trace_summaries where trace_id=decode('$(awk '$1=="slow"{print $2}' load.out)','hex')")
           test "$slow" -ge 800000000
           test "$(q "select count(*) from ingestion_records where source='collector' and http_status=200")" -ge 1
+      - name: Supply chain — vulnerability scan + SBOM (Trivy)
+        env:
+          TRIVY: aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+        run: |
+          mkdir -p sbom "$HOME/.cache/trivy"
+          t(){ docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME/.cache/trivy:/root/.cache/trivy" -v "$PWD:/src" -w /src "$TRIVY" "$@"; }
+          # Our images and lockfiles: fail on fixable CRITICAL/HIGH.
+          for img in traceflow-trace-api traceflow-web traceflow-gateway; do
+            t image --quiet --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$img"
+            t image --quiet --format cyclonedx --output "sbom/$img.cdx.json" "$img"
+          done
+          t fs --quiet --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 .
+          # Pinned third-party images: report only (upstream fixes), reviewed at release.
+          t image --quiet --severity CRITICAL,HIGH --ignore-unfixed --exit-code 0 postgres:18.7
+          t image --quiet --severity CRITICAL,HIGH --ignore-unfixed --exit-code 0 otel/opentelemetry-collector-contrib:0.165.0
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: sbom-cyclonedx
+          path: sbom/
+          retention-days: 30
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1 (reads packageManager)
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:

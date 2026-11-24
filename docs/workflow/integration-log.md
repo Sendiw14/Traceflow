@@ -354,3 +354,14 @@ RESULTS (local, PostgreSQL 18.7):
 NOT DONE: /login UI and getOperator() wiring into /app layouts and actions (Sonnet); real GitHub OAuth (needs OAuth app, pre-M8); rate limiting on auth routes
 FINAL: PASS (local) — CI pending
 ```
+
+## M6-003/004 — Supply chain scan + SBOM; OTLP-19
+
+```text
+TASK_IDS: M6-003, M6-004 | BASE: 19674cd
+M6-002 CI: https://github.com/Sendiw14/Traceflow/actions/runs/45463503295 → all 5 jobs success (auth integration suite on PostgreSQL in web job)
+M6-003: CI compose-smoke runs Trivy 0.76.2 (digest-pinned): images traceflow-{trace-api,web,gateway} + `trivy fs .` fail on fixable CRITICAL/HIGH; postgres/collector images report-only; CycloneDX SBOMs uploaded (sbom-cyclonedx, 30 d)
+  local fs scan before fix → examples/demo-system golang.org/x/net v0.59.0: CVE-2026-78661 (HIGH, fixed 0.62.0), CVE-2026-78669 (HIGH, fixed 0.60.0) → bumped to v0.62.0 → rescan 0 findings in all 4 lockfiles
+  image scans NOT TESTED locally (local Docker builds blocked) — first run in CI
+M6-004: TestOTLP19ReferenceSDKRetriesOn503 → PASS: otlptracehttp v1.47.0 direct to receiver; storage fails twice → 503 Retry-After 5 ×2, then 200; 3 attempts, 1 span stored; elapsed ≥ 9 s proves Retry-After honoured over 50 ms backoff
+```

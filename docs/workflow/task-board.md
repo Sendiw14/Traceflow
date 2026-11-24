@@ -40,3 +40,5 @@
 | M5-GATE M5 exit review | Opus + owner | APPROVED by owner 2026-11-25 | /login moves to M6 with sign-in |
 | M6-001 DB roles: migrate job (superuser), traceflow_app (no DDL), traceflow_ro, traceflow_auth + separate auth DB | Opus | DONE (local + integration test) | `.env` regenerated: old local .env must be moved aside and `make env` re-run |
 | M6-002 Auth core: better-auth wiring, GitHub allowlist, __Host- cookies, 12 h/7 d, denied redirect, origin check forced on | Opus | DONE (19 auth tests; CI pending) | Sonnet to integrate /login + getOperator |
+| M6-003 Supply chain: Trivy image + lockfile scan (fail on fixable CRITICAL/HIGH in our artefacts), CycloneDX SBOM artifact | Opus | DONE locally (fs scan found + fixed 2 HIGH in demo x/net); CI pending | third-party images report-only |
+| M6-004 OTLP-19: reference OTel Go SDK → receiver, 2×503 then 200, Retry-After honoured, stored once | Opus | DONE (10.0 s test) | |
