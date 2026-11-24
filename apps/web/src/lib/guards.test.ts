@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Each layout and action must refuse a disallowed profile on its own, without proxy.ts.
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/auth/server", () => ({ getOperator: async () => null, currentAuthMode: () => ({ kind: "bootstrap" }) }));
 vi.mock("@/lib/server/data", () => ({
   updateSettings: vi.fn(async () => { throw new Error("trace-api must not be called"); }),
   listTraces: vi.fn(async () => { throw new Error("trace-api must not be called"); }),

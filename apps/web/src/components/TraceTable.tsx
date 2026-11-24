@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { loadMoreTraces, type TraceQuery } from "@/app/app/traces/actions";
+import { loginUrl } from "@/lib/login";
 import { formatCount, formatDateTime, shortId } from "@/lib/format";
 import { parseNanos } from "@/lib/time/nanos";
 import type { Schemas } from "@/lib/server/data";
@@ -45,7 +46,11 @@ export function TraceTable({ initial, nextCursor, query, caption, rangeQuery = "
     if (!query || !cursor) return;
     start(async () => {
       const r = await loadMoreTraces(query, cursor);
-      if (!r.ok) { setError(r.message); return; }
+      if (!r.ok) {
+        if (r.unauthorized) { window.location.assign(loginUrl(window.location.pathname, "expired")); return; }
+        setError(r.message);
+        return;
+      }
       setError(null);
       const seen = new Set(rows.map((x) => x.trace_id));
       const fresh = r.items.filter((x) => !seen.has(x.trace_id));

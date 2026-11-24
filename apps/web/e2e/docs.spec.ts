@@ -52,9 +52,12 @@ test("docs content: commands exist in the Makefile, deployment says hosted profi
   const dep = await page.getByTestId("docs.article").innerText();
   expect(dep).toContain("Not built yet");
   expect(dep).toMatch(/not built\. There is no TLS reverse proxy/);
+  expect(dep).toContain("TRACEFLOW_AUTH_SECRET");
+  expect(dep).not.toContain("TRACEFLOW_DATABASE_URL=");
   expect(dep).not.toMatch(/compose\.production\.yaml/);
   await page.goto("/docs/security");
   const sec = await page.getByTestId("docs.article").innerText();
-  expect(sec).toContain("Sign-in lands in milestone M6");
+  expect(sec).toContain("Real GitHub sign-in has not been tested");
+  expect(sec).toContain("Sign-in is implemented for the operator-prod profile");
   expect(sec).toContain("Remote OTLP ingestion is off by default");
 });

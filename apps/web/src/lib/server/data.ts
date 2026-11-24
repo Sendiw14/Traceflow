@@ -1,5 +1,9 @@
 import "server-only";
 import { createTraceApiClient } from "@/lib/api/client";
+import { headers } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+import { loginUrl, safeNext } from "@/lib/login";
+import { requireAccess } from "./guard";
 import type { components } from "@/lib/api/generated/schema";
 
 export type Schemas = components["schemas"];
@@ -31,6 +35,13 @@ interface Raw<T> { data?: T; error?: unknown; response: Response }
 
 /** Normalises openapi-fetch results and network failures into Result<T>; never throws. */
 export async function call<T>(fn: (c: NonNullable<ReturnType<typeof api>>) => Promise<Raw<T>>): Promise<Result<T>> {
+  // Authorization lives at the data source: layouts do not re-run on client-side navigation, so every trace-api
+  // read checks identity itself. No operator → redirect to sign-in; profile not served → 404. Shared reads stay open in public-demo.
+  const access = await requireAccess(null);
+  if (!access.ok) {
+    if (access.code === "forbidden") notFound();
+    redirect(loginUrl(safeNext((await headers()).get("x-tf-path") ?? "/app"), "expired"));
+  }
   const c = api();
   if (!c) return { ok: false, error: NOT_CONFIGURED };
   try {
@@ -79,7 +90,6 @@ export const getSpan = (traceId: string, spanId: string) =>
 export const listTraces = (q: { from: bigint; to: bigint; service?: string; status?: "any" | "error" | "ok_or_unset"; minDurationNano?: bigint; cursor?: string; limit?: number }) =>
   call((c) => c.GET("/v1/traces", { params: { query: { from: ns(q.from), to: ns(q.to), service: q.service, status: q.status, min_duration_nano: q.minDurationNano === undefined ? undefined : ns(q.minDurationNano), cursor: q.cursor, limit: q.limit } } }));
 
-/** M5 has no sign-in (ADR-0005 lands in M6): audit rows use sentinel actor "0", which is not a real GitHub ID. M6 must replace this with the session identity before operator-prod can serve /app/settings. */
-const LOCAL_DEV_ACTOR = "0";
-export const updateSettings = (body: Schemas["SettingsPatch"]) =>
-  call((c) => c.PATCH("/v1/settings", { params: { header: { "X-Traceflow-Actor": LOCAL_DEV_ACTOR } }, body }));
+/** `actor` is the signed-in operator's numeric GitHub ID (bootstrap: "0") — never taken from the request. */
+export const updateSettings = (body: Schemas["SettingsPatch"], actor: string) =>
+  call((c) => c.PATCH("/v1/settings", { params: { header: { "X-Traceflow-Actor": actor } }, body }));

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 // Deployment profile gating (authz-matrix.md). Enforced server-side per request; links are never the control.
 export const PROFILES = ["local-dev", "operator-prod", "public-demo"] as const;
 export type Profile = (typeof PROFILES)[number];
-export type Area = "app" | "demo";
+export type Area = "app" | "demo" | "login";
 
 /** Unknown or missing profile → null, which allows nothing gated (fail closed). */
 export function parseProfile(v: string | undefined): Profile | null {
@@ -11,7 +11,7 @@ export function parseProfile(v: string | undefined): Profile | null {
 
 const ALLOWED: Record<Profile, readonly Area[]> = {
   "local-dev": ["app", "demo"],
-  "operator-prod": ["app"],
+  "operator-prod": ["app", "login"], // /login exists only where there is something to sign in to
   "public-demo": ["demo"],
 };
 
@@ -23,6 +23,7 @@ export function allows(profile: Profile | null, area: Area): boolean {
 export function areaOf(pathname: string): Area | null {
   if (pathname === "/app" || pathname.startsWith("/app/")) return "app";
   if (pathname === "/demo" || pathname.startsWith("/demo/")) return "demo";
+  if (pathname === "/login" || pathname.startsWith("/login/")) return "login";
   return null;
 }
 

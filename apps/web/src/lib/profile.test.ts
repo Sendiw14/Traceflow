@@ -7,9 +7,9 @@ describe("profile gating", () => {
     for (const v of [undefined, "", "prod", "Public-Demo", "local-dev "]) expect(parseProfile(v)).toBeNull();
   });
   it("matches the authorization matrix", () => {
-    expect([allows("local-dev", "app"), allows("local-dev", "demo")]).toEqual([true, true]);
-    expect([allows("operator-prod", "app"), allows("operator-prod", "demo")]).toEqual([true, false]);
-    expect([allows("public-demo", "app"), allows("public-demo", "demo")]).toEqual([false, true]);
+    expect([allows("local-dev", "app"), allows("local-dev", "demo"), allows("local-dev", "login")]).toEqual([true, true, false]);
+    expect([allows("operator-prod", "app"), allows("operator-prod", "demo"), allows("operator-prod", "login")]).toEqual([true, false, true]);
+    expect([allows("public-demo", "app"), allows("public-demo", "demo"), allows("public-demo", "login")]).toEqual([false, true, false]);
   });
   it("fails closed when the profile is missing or unknown", () => {
     expect(allows(parseProfile(undefined), "app")).toBe(false);
@@ -20,6 +20,7 @@ describe("profile gating", () => {
     expect(areaOf("/app/traces/x")).toBe("app");
     expect(areaOf("/demo")).toBe("demo");
     expect(areaOf("/demo/traces/x")).toBe("demo");
-    for (const p of ["/", "/docs", "/application", "/demonstration", "/apps"]) expect(areaOf(p)).toBeNull();
+    expect(areaOf("/login")).toBe("login");
+    for (const p of ["/", "/docs", "/application", "/demonstration", "/apps", "/loginx"]) expect(areaOf(p)).toBeNull();
   });
 });

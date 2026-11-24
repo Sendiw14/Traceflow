@@ -47,7 +47,7 @@ export default function GettingStarted() {
         <li><strong>Port 3000 is in use:</strong> Compose cannot bind <code>127.0.0.1:3000</code>. Free the port and run <code>make up</code> again.</li>
         <li><strong>No traces yet:</strong> wait for the <code>traffic</code> service, or run <code>docker compose run --rm load</code>, then refresh. <Link href="/docs/instrumentation">Instrumentation</Link> explains how spans reach TRACEFLOW.</li>
       </ul>
-      <Callout title="Local only">This stack has no sign-in. It is meant for your own machine. See <Link href="/docs/security">Security</Link> and <Link href="/docs/deployment">Deployment</Link>.</Callout>
+      <Callout title="Local only">The local profile has no sign-in. It is meant for your own machine. See <Link href="/docs/security">Security</Link> and <Link href="/docs/deployment">Deployment</Link>.</Callout>
     </DocArticle>
   );
 }

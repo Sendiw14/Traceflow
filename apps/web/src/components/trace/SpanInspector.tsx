@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchSpan } from "@/app/app/traces/[traceId]/actions";
 import { CopyButton } from "@/components/CopyButton";
+import { loginUrl } from "@/lib/login";
 import { Badge } from "@/components/ui";
 import { scalarText, type AnyValue } from "@/lib/any-value";
 import { formatCount } from "@/lib/format";
@@ -48,7 +49,10 @@ export function SpanInspector({ traceBase, traceId, selected, liteSpan, fullSpan
   useEffect(() => {
     if (!needsFetch || !selected) return;
     let live = true;
-    fetchSpan(traceId, selected).then((result) => { if (live) setLoaded({ spanId: selected, result }); });
+    fetchSpan(traceId, selected).then((result) => {
+      if (!result.ok && result.unauthorized) { window.location.assign(loginUrl(window.location.pathname, "expired")); return; }
+      if (live) setLoaded({ spanId: selected, result });
+    });
     return () => { live = false; };
   }, [needsFetch, selected, traceId, retry]);
 

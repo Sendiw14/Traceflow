@@ -26,11 +26,11 @@ export default function DocsHome() {
           <tr><th scope="row">Query API (all operations in <code>api/openapi.yaml</code> 1.0.0)</th><td>Built</td></tr>
           <tr><th scope="row">Web app: overview, traces, trace detail, services, map, analytics, onboarding, settings</th><td>Built for the <code>local-dev</code> profile</td></tr>
           <tr><th scope="row">Synthetic read-only demo routes</th><td>Built; served when the profile allows them</td></tr>
-          <tr><th scope="row">Operator sign-in (GitHub OAuth)</th><td>Not built. Planned for milestone M6</td></tr>
+          <tr><th scope="row">Operator sign-in (GitHub OAuth) for <code>operator-prod</code></th><td>Built; tested against a mocked GitHub only, not real GitHub</td></tr>
           <tr><th scope="row">Hosted deployments (<code>operator-prod</code>, <code>public-demo</code>): TLS, production Compose file, backups</th><td>Not built</td></tr>
         </tbody>
       </table></div>
-      <Callout kind="warn" title="Not ready for real operator data">Until sign-in exists, run TRACEFLOW only on a machine you control, bound to loopback as the Compose file does.</Callout>
+      <Callout kind="warn" title="Not ready for real operator data">The local profile has no sign-in and no hosted deployment exists. Run TRACEFLOW only on a machine you control, bound to loopback as the Compose file does.</Callout>
       <H2 id="pages">In these docs</H2>
       <ul>
         <li><Link href="/docs/getting-started">Getting started</Link>: prerequisites, install, sample traces, troubleshooting.</li>

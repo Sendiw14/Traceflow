@@ -11,6 +11,7 @@ const URLS = {
 const TRACE = "0123456789abcdef0123456789abcdef";
 const APP = ["/app", "/app/traces", `/app/traces/${TRACE}`, "/app/services", "/app/map", "/app/analytics", "/app/onboarding", "/app/settings"];
 const DEMO = ["/demo", `/demo/traces/${TRACE}`];
+const LOGIN = ["/login", "/login?error=denied"];
 
 async function status(request: import("@playwright/test").APIRequestContext, base: string, path: string) {
   return (await request.get(`${base}${path}`)).status();
@@ -21,10 +22,13 @@ test("public-demo: every /app route is 404, public routes stay up", async ({ req
   for (const p of ["/", "/docs", "/demo"]) expect(await status(request, URLS["public-demo"], p), p).toBe(200);
 });
 
-test("operator-prod: every /demo route is 404, /app stays up", async ({ request }) => {
-  for (const p of DEMO) expect(await status(request, URLS["operator-prod"], p), p).toBe(404);
-  expect(await status(request, URLS["operator-prod"], "/app")).toBe(200);
-  expect(await status(request, URLS["operator-prod"], "/")).toBe(200);
+test("operator-prod: every /demo route is 404; /app needs sign-in (redirect), site stays up", async ({ request }) => {
+  const b = URLS["operator-prod"];
+  for (const p of DEMO) expect(await status(request, b, p), p).toBe(404);
+  const res = await request.get(`${b}/app`, { maxRedirects: 0 });
+  expect([302, 307]).toContain(res.status());
+  expect(res.headers()["location"]).toMatch(/\/login\?next=%2Fapp$/);
+  expect(await status(request, b, "/")).toBe(200);
 });
 
 test("local-dev: /app and /demo are both on", async ({ request }) => {
@@ -51,4 +55,11 @@ test("second layer: layouts still 404 when the proxy is skipped via the subreque
   for (const p of ["/app", "/app/settings", `/app/traces/${TRACE}`]) expect((await request.get(`${URLS["public-demo"]}${p}`, { headers })).status(), p).toBe(404);
   for (const p of DEMO) expect((await request.get(`${URLS["operator-prod"]}${p}`, { headers })).status(), p).toBe(404);
   for (const p of [...APP, ...DEMO]) expect((await request.get(`${URLS.bogus}${p}`, { headers })).status(), p).toBe(404);
+});
+
+test("/login is 404 outside operator-prod", async ({ request }) => {
+  for (const base of [URLS["local-dev"], URLS["public-demo"], URLS.unset, URLS.bogus]) {
+    for (const p of LOGIN) expect(await status(request, base, p), `${base}${p}`).toBe(404);
+  }
+  for (const p of LOGIN) expect(await status(request, URLS["operator-prod"], p), p).toBe(200);
 });
