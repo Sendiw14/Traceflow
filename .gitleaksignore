@@ -1,3 +1,4 @@
 # Reviewed false positives (gitleaks fingerprints). Add only after confirming the match is not a secret.
 # Collector config sample shown on /app/onboarding: internal URL, no credential.
-17f873a4b510660322048d9a3e45dae1a6f90bed:apps/web/src/app/app/onboarding/page.tsx:generic-api-key:33
+# SHA is post-rewrite (2026-11-26); see docs/workflow/sha-map-pre-trailer-rewrite.txt.
+1703e705b6070a1a95991c73b2358b904d9b5106:apps/web/src/app/app/onboarding/page.tsx:generic-api-key:33
